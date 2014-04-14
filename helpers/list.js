@@ -1,5 +1,6 @@
-exports.render = render;
-exports.renderPages = renderPages;
+exports.renderTable = renderTable;
+exports.renderTitle = renderTitle;
+exports.renderUl = renderUl;
 exports.renderAddLink = renderAddLink;
 
 var Html = require('htmler');
@@ -10,24 +11,35 @@ var tr = Html.tr;
 var td = Html.td;
 var th = Html.th;
 var a = Html.a;
+var ul = Html.ul;
+var li = Html.li;
 var span = Html.span;
 
-function render(records, config) {
+/**
+ * needed args:
+ *  schemas
+ *  showFields
+ *  links (link makers)
+ *  readonly
+ */
+function renderTable (records, config) {
 	var tableHeadHtml = '';
 	var tableBodyHtml = '';
 	var schemas = config.schemas;
 	var scriptHtml = '';
-  // console.log(config.showFields); 
 	
 	schemas.forEachField(function (name, field) {
 		tableHeadHtml += th().html(field.text ? field.text : field.name);
 	}, config.showFields);
 	
-	tableHeadHtml += th().html('操作');
+	if (!config.readonly) {
+  	tableHeadHtml += th().html('操作');
+  }
 	tableHeadHtml = tr().html(tableHeadHtml);
     
 	records.forEach(function (record) {
 		var trHtml = '';
+		var editLink = '', deleteLink = '';
 		
 		schemas.forEachField(function (name, field) {
 			var ele = '';
@@ -41,11 +53,16 @@ function render(records, config) {
 			trHtml += td().html(ele);
 		
 		}, config.showFields);
-		
+
+		if (!config.readonly) {
+      editLink = config.links.edit ? a({href: config.links.edit(record._id)}).html('编辑') : '';
+      deleteLink = config.links.delete ? a({href: '#', 'onclick': 'del(\'' + config.links.delete(record._id) + '\');'}).html('删除') : '';
+    }
+    
 		trHtml += td().html(
-			a({href: config.links.edit(record._id)}).html('编辑'),
-			span().html(' | '),
-			a({href: '#', 'onclick': 'del(\'' + config.links.delete(record._id) + '\');'}).html('删除')
+			editLink,
+			span().html('&nbsp;'),
+			deleteLink
 		);
 		
 		tableBodyHtml += tr().html(trHtml);
@@ -65,66 +82,30 @@ function render(records, config) {
 	) + scriptHtml;
 }
 
-function renderPages (currentPage, pageCount, link) {
-	var ul = Html.ul;
-	var li = Html.li;
-	
-	var beforePage = 3;
-	var afterPage = 3;
-	var pages = [1];
-	var pagesHtml = [];
-	
-	if (pageCount < 2 || currentPage > pageCount) return '';
-	
-	if (currentPage - beforePage > 2) {
-		pages.push('...');
-	}
-	
-	for (var i = currentPage - beforePage; i <= currentPage; i++) {
-		if (i > 1) {
-			pages.push(i);
-		}
-	}
-	
-	for (var i = currentPage + 1; i <= currentPage + afterPage; i++) {
-		if (i < pageCount) {
-			pages.push(i);
-		}
-	}
-	
-	if (pages.indexOf(pageCount) == -1) {
-	
-		if (currentPage + afterPage < pageCount - 1) {
-			pages.push('...');
-		}
+function renderUl (records, config) {
+  var liHtmls = [];
+  records.forEach(function (record ) {
+    var value = record[config.viewLinkField];
+    liHtmls.push(
+      li().html(
+        a({href: config.links.view(record._id)}).html(value)
+      )
+    );
+  });
+  return ul('list-unstyled').html(liHtmls);
+}
 
-		pages.push(pageCount);
-	}
-	
-	pages.forEach(function (page) {
-		if (page == '...') {
-			pagesHtml.push(li("disabled").html(span().html('...')));
-		} else if ( page == currentPage) {
-			pagesHtml.push(li('active').html(a({href: '#'}).html(page)));
-		} else {
-			pagesHtml.push(li().html(a({href: link(page)}).html(page)));
-		}
-		
-	});
-	
-	if (currentPage > 1) {
-		pagesHtml.unshift(li().html(a({href: link(currentPage - 1)}).html('&laquo;')));
-	} else {
-		pagesHtml.unshift(li("disabled").html(span().html('&laquo;')));
-	}
-	
-	if (currentPage < pageCount) {
-		pagesHtml.push(li().html(a({href: link(currentPage + 1)}).html('&raquo;')));
-	} else {
-		pagesHtml.push(li("disabled").html(span().html('&raquo;')));
-	}
-	
-	return ul("pagination").html(pagesHtml);
+function renderTitle (title, addLinkUrl, addLinkText) {
+  var addLink = '';
+  if (addLinkUrl) {
+    addLinkText = addLinkText || '新增';
+    addLink = a({class: 'pull-right btn btn-large btn-primary', href: addLinkUrl}).html(addLinkText);
+  }
+  
+  return Html.h1().html(
+      title, 
+      addLink
+  );
 }
 
 function renderAddLink (link, text) {

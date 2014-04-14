@@ -30,6 +30,7 @@ function create (fields) {
 	this.getReferences = getReferences;
 	this.getReferenceNames = getReferenceNames;
 	this.addValues = addValues;
+	this.getFileRelatedData = getFileRelatedData;
 }
 
 // @return array
@@ -73,10 +74,23 @@ function forEachField (callback, whiteList) {
 			field.name = realName; // important!
 			callback(name, field, self);
 		} else {
-			throw new Error('invalid field: %s', name);
+			// throw new Error('invalid field: ' + name);
 		}
 		
 	});
+}
+
+function getFileRelatedData (record) {
+  var data = {};
+  this.forEachField(function (name, field) {
+    if (field.inputType == 'file') {
+      data[name] = record[name];
+      if (field.sizeField) {
+        data[field.sizeField] = record[field.sizeField];
+      }
+    }
+  }, record);
+  return data;
 }
 
 function getField (name) {
@@ -107,6 +121,7 @@ function hasUploadField () {
 	return has;
 }
 
+//@isEditAction: 修改记录时，应该允许不上传文件，因为有可能只是修改其它字段
 function checkFile (name, file) {
 	var field = this.getField(name);
 	var ext;
@@ -178,14 +193,17 @@ function thumbUrl (field) {
 }
 
 function presentValue (name, value) {
-	var presentType = this.getPresentType(name);
-	var presentKey = this.getPresentKey(name);
-	var name = this.getRealName(name);
-	var field = this.getField(name);
+	var presentType, presentKey, name, field;
 	
 	if (value === null || value === undefined || value === '') {
-		return value;
+	  // console.log('%s = %s', name, value);
+		return '';
 	}
+	
+	presentType = this.getPresentType(name);
+	presentKey = this.getPresentKey(name);
+	name = this.getRealName(name);
+	field = this.getField(name);
 	
 	switch (presentType) {
 		case 'image':
@@ -199,7 +217,7 @@ function presentValue (name, value) {
 			}
 			break;
 		default:
-			if (typeof value === 'object') {
+			if (typeof value === 'object') { // reference
 				if (presentKey) {
 					return value[presentKey];
 				}

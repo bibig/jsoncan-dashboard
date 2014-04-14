@@ -9,15 +9,18 @@ var td = Html.td;
 var th = Html.th;
 var a = Html.a;
 var span = Html.span;
+var List = require('./list');
 
 function render (record, config) {
 	var rows = [];
 	var scriptHtml;
 	var schemas = config.schemas;
+	var editLink, deleteLink, addLink;
+	record = record || {};
 	
 	//console.log(config.showFields);
 	schemas.forEachField(function (name, field) {
-		var value = record[field.name];
+		var value = record[field.name] || null;
 		// console.log(name);	
 		rows.push(tr().html(
 			th().html(field.text || field.name),
@@ -25,15 +28,28 @@ function render (record, config) {
 		));
 	}, config.showFields);
 	
+	if (config.hasMany) {
+	  rows.push(tr().html(
+	    th().html(config.hasMany.title),
+	    td().html(List.renderUl(record[config.hasMany.table], config.hasMany))
+	  ));
+	}
+	
+	// console.log(config);
+	
+	editLink = config.links.edit ? a({href: config.links.edit, class: 'btn btn-warning'}).html('编辑') : '';
+	deleteLink = config.links.delete ? a({href: '#', 'onclick': 'del(\'' + config.links.delete + '\');', class: 'btn btn-danger'}).html('删除') : '';
+	addLink = config.links.add ? a({href: config.links.add, class: 'btn btn-success'}).html('新增') : '';
+	
 	rows.push(
 		tr().html(
 			td().html(),
 			td().html(
-				a({href: config.links.edit, class: 'btn btn-warning'}).html('编辑'),
+				editLink,
 				span().html('&nbsp;'),
-				a({href: '#', 'onclick': 'del(\'' + config.links.delete + '\');', class: 'btn btn-danger'}).html('删除'),
+				deleteLink,
 				span().html('&nbsp;'),
-				a({href: config.links.add, class: 'btn btn-success'}).html('新增')
+				addLink
 			)
 		)
 	);

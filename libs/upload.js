@@ -12,9 +12,21 @@ function create (files, schemas) {
 	this.files = files;
 	this.schemas = schemas;
 	this.data = {};
-	
+	this.noFileUpload = noFileUpload;
 	this.validate = validate;
 	this.save = save;
+}
+
+function noFileUpload () {
+  var result = true;
+  forEachFile(this.files, function (name, file) {
+    if (!result) { return; }
+    if (file.originalFilename !== '') {
+      result = false;
+    }
+	});
+	
+	return result;
 }
 
 // waterfall steps:  validate -> save -> crop -> thumb

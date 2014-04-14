@@ -128,7 +128,6 @@ function select (tableName, schema, value, error) {
 	});
 	
 	value = getDefaultValue(value, schema);
-	
 	if (value != null && value != '' && value != undefined) {
 		scriptHtml = Html.script().html(
 			"$(function () { $('#" + selectProperties.id + "').val('" + value + "');});"
