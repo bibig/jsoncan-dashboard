@@ -31,24 +31,28 @@ function getContainerClass (error) {
 function getLableHtml (schema) {
 	return label({for: getInputId(schema.name)}).html(schema.text, schema.required ? '*' : '');
 }
-	
-function getErrorHtml (error) {
+
+function getErrorWithSignOrHelp (error, help) {
 	if (error) {
 		return span('glyphicon glyphicon-remove form-control-feedback').html() + getHelpBlockHtml(error);
+	} else {
+	  return getHelpBlockHtml(help);
 	}
-	
-	return '';
 }
 	
-function getErrorBlockHtml (error) {
-	if (error) {
-		return getHelpBlockHtml(error);
-	}
-	return '';
+function getErrorOrHelp (error, help) {
+  if (error) {
+    return getHelpBlockHtml(error);
+  } else {
+    return getHelpBlockHtml(help);
+  }
 }
 
 function getHelpBlockHtml (text) {
-	return span('help-block').html(text);
+  if (text) {
+  	return span('help-block').html(text);
+  }
+  return '';
 }
 
 function getDefaultValue(value, schemas) {
@@ -83,7 +87,7 @@ function text (tableName, schema, value, error) {
 	return div(getContainerClass(error)).html(
 		getLableHtml(schema),
 		inputHtml,
-		getErrorHtml(error)
+		getErrorWithSignOrHelp(error, schema.inputHelp)
 	);
 }
 
@@ -106,7 +110,7 @@ function file (schema, error) {
 	return div(getContainerClass(error)).html(
 		getLableHtml(schema),
 		inputHtml,
-		getErrorHtml(error)
+		getErrorWithSignOrHelp(error, schema.inputHelp)
 	);
 }
 
@@ -137,7 +141,7 @@ function select (tableName, schema, value, error) {
 	return div(getContainerClass(error)).html(
 		getLableHtml(schema),
 		select(selectProperties).html(options),
-		getErrorBlockHtml(error)
+		getErrorOrHelp(error, schema.inputHelp)
 	) + scriptHtml;
 	
 }
@@ -156,7 +160,7 @@ function textarea (tableName, schema, value, error) {
 	return div(getContainerClass(error)).html(
 		getLableHtml(schema),
 		textarea(properties).html(value || ''),
-		getErrorBlockHtml(error)
+		getErrorOrHelp(error, schema.inputHelp)
 	);
 }
 
@@ -178,7 +182,7 @@ function checkbox (tableName, schema, value, error) {
 		label().html(
 			input(properties),
 			schema.text,
-			getErrorBlockHtml(error)
+			getErrorOrHelp(error, schema.inputHelp)
 		)
 	);
 }
@@ -211,7 +215,7 @@ function radio (tableName, schema, value, error) {
 		getLableHtml(schema),
 		// getLableHtml(schema),
 		optionsHtml, 
-		getErrorBlockHtml(error)
+		getErrorOrHelp(error, schema.inputHelp)
 	);
 }
 

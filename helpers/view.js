@@ -10,18 +10,24 @@ var th = Html.th;
 var a = Html.a;
 var span = Html.span;
 var List = require('./list');
+var Media = require('./media');
 
 function render (record, config) {
 	var rows = [];
 	var scriptHtml;
 	var schemas = config.schemas;
 	var editLink, deleteLink, addLink;
+	var hasManyPartHtml;
+	
 	record = record || {};
 	
 	//console.log(config.showFields);
 	schemas.forEachField(function (name, field) {
-		var value = record[field.name] || null;
-		// console.log(name);	
+		var value = record[field.name];
+		if (value === undefined && value === '') {
+		  value = null;
+		}
+
 		rows.push(tr().html(
 			th().html(field.text || field.name),
 			td().html(schemas.presentValue(name, value))
@@ -29,13 +35,20 @@ function render (record, config) {
 	}, config.showFields);
 	
 	if (config.hasMany) {
+	  switch (config.hasMany.style) {
+	    case 'media':
+	      hasManyPartHtml = Media.render(record[config.hasMany.table], config.hasMany);
+	      break;
+	    case 'list':
+	    default:
+	      hasManyPartHtml = List.renderUl(record[config.hasMany.table], config.hasMany);
+	  }
+	  
 	  rows.push(tr().html(
 	    th().html(config.hasMany.title),
-	    td().html(List.renderUl(record[config.hasMany.table], config.hasMany))
+	    td().html(hasManyPartHtml)
 	  ));
 	}
-	
-	// console.log(config);
 	
 	editLink = config.links.edit ? a({href: config.links.edit, class: 'btn btn-warning'}).html('编辑') : '';
 	deleteLink = config.links.delete ? a({href: '#', 'onclick': 'del(\'' + config.links.delete + '\');', class: 'btn btn-danger'}).html('删除') : '';
@@ -62,5 +75,5 @@ function render (record, config) {
 		}
 	);
 
-	return table('table table-bordered').html(rows) + scriptHtml;
+	return table('table table-bordered table-record').html(rows) + scriptHtml;
 }

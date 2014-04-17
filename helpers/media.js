@@ -1,24 +1,21 @@
 exports.render = render;
 
+var Grids = require('./grids');
 var Html = require('htmler');
-var table = Html.table;
-var thead = Html.thead;
-var tbody = Html.tbody;
-var tr = Html.tr;
-var td = Html.td;
-var th = Html.th;
 var a = Html.a;
-var ul = Html.ul;
-var li = Html.li;
-var span = Html.span;
-
+var div = Html.div;
 
 function render (records, config) {
-  var max = records.length;
-  var cols = config.cols || 3;
-  
-  
-  for (var i = 0; i < max; i++) {
+  var items = [];
+  console.log(records);
+  console.log(config);
+  records.forEach(function (record ) {
+    var name = config.schemas.getRealName(config.viewLinkField);
+    var value = record[name];
+    var media = config.schemas.presentValue(config.viewLinkField, value);
+    var link = a({href: config.links.view(record._id)}).html(media);
     
-  }
+    items.push(div('media-box').html(link));
+  });
+  return Grids.render(items, 4);
 }

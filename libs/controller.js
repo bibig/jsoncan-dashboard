@@ -26,7 +26,7 @@ function indexPage (dashboards) {
     var view = path.join(dashboards.settings.viewPath, 'index.html');
     var locals = {};
     
-    locals.list = helpers.dashboards.render(dashboards.modules, routesMap);
+    locals.list = helpers.grids.renderDashboards(dashboards.modules, routesMap);
     res.render(view, locals);
   };
   
@@ -293,7 +293,7 @@ Controller.prototype.viewAction = function () {
       };
       
       if (config.hasMany) {
-        hasManyRoutes = new Routes(self.prefix, config.hasMany.table);
+        hasManyRoutes = Routes.create(self.prefix, config.hasMany.table);
         config.hasMany.links = {
           view: function (_id) { return hasManyRoutes.viewRoute(_id);}
         };
@@ -419,7 +419,6 @@ Controller.prototype.setReferencesValues = function (showFields, callback) {
 			}
 		});
 	};
-	
 	if (tasks.length > 0) {
 		async.each(tasks, setFn, callback);
 	} else {
@@ -430,7 +429,7 @@ Controller.prototype.setReferencesValues = function (showFields, callback) {
 Controller.prototype.addAction = function () {
 	var self = this;
 	var config = this.initActionConfig('add');
-	
+
 	if (config === false ) { return false; }
 	
 	return function (req, res, next) {

@@ -85,10 +85,12 @@ function renderTable (records, config) {
 function renderUl (records, config) {
   var liHtmls = [];
   records.forEach(function (record ) {
-    var value = record[config.viewLinkField];
+    var name = config.schemas.getRealName(config.viewLinkField);
+    var value = record[name];
+
     liHtmls.push(
       li().html(
-        a({href: config.links.view(record._id)}).html(value)
+        a({href: config.links.view(record._id)}).html(config.schemas.presentValue(config.viewLinkField, value))
       )
     );
   });
@@ -99,7 +101,7 @@ function renderTitle (title, addLinkUrl, addLinkText) {
   var addLink = '';
   if (addLinkUrl) {
     addLinkText = addLinkText || '新增';
-    addLink = a({class: 'pull-right btn btn-large btn-primary', href: addLinkUrl}).html(addLinkText);
+    addLink = a({class: 'pull-right btn btn-large btn-success', href: addLinkUrl}).html(addLinkText);
   }
   
   return Html.h1().html(

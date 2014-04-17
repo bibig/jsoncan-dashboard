@@ -194,7 +194,7 @@ function thumbUrl (field) {
 
 function presentValue (name, value) {
 	var presentType, presentKey, name, field;
-	
+	// console.log(name, value);
 	if (value === null || value === undefined || value === '') {
 	  // console.log('%s = %s', name, value);
 		return '';
@@ -223,6 +223,7 @@ function presentValue (name, value) {
 				}
 			}
 	}
+	// console.log('2~', value);
 	return value;
 }
 
@@ -327,13 +328,12 @@ function getReferences (showFields) {
 	
 	this.forEachField(function (name, field) {
 		if (field.type == 'ref') {
-			map[name] = {
-				table: getReferenceTable(field),
-				options: field.prepare || {}
-			};
+			map[name] = utils.merge({
+				table: getReferenceTable(field)
+			}, field.prepare || {});
 		}
-	
 	}, showFields);
+	
 	return map;
 }
 
