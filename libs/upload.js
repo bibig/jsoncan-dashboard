@@ -5,7 +5,7 @@ var rander = require('rander');
 var path = require('path');
 var utils = require('./utils');
 var async = require('async');
-var gm = require('gm');
+var gm = require('gm').subClass({ imageMagick: true });
 
 function create (files, schemas) {
 	
