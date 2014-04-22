@@ -56,7 +56,7 @@ function renderTable (records, config) {
 
 		if (!config.readonly) {
       editLink = config.links.edit ? a({href: config.links.edit(record._id)}).html('编辑') : '';
-      deleteLink = config.links.delete ? a({href: '#', 'onclick': 'del(\'' + config.links.delete(record._id) + '\');'}).html('删除') : '';
+      deleteLink = config.links.delete ? a({href: '#', 'onclick': 'jd.del(\'' + config.links.delete(record._id) + '\');'}).html('删除') : '';
     }
     
 		trHtml += td().html(
@@ -68,6 +68,7 @@ function renderTable (records, config) {
 		tableBodyHtml += tr().html(trHtml);
 	});
   
+	/*
 	scriptHtml = Html.script().html(
 		function del(url) {
 			if (confirm('您确定要删除这条记录?')) {
@@ -75,6 +76,11 @@ function renderTable (records, config) {
 			}
 		}
 	);
+  */
+   
+  if (config.token) {
+	  scriptHtml = Html.script().html('$(function () { jd.setCsrf("' + config.token + '"); });');
+	}
 
 	return table('table table-striped').html(
 		thead().html(tableHeadHtml),

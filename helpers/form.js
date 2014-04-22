@@ -8,8 +8,10 @@ function render (tableName, config) {
 	var schemas = config.schemas;
 	var data = config.data || {};
 	var errors = config.errors || {};
+	var scriptHtml;
 	var inputHtmls = [];
 	var formProperties = {
+	  id: 'jdb-form',
 		role: 'form',
 		method: 'post',
 		action: config.action
@@ -56,11 +58,14 @@ function render (tableName, config) {
   }
 	
 	inputHtmls.push(Html.input({
+	  id: 'jdb-submit',
 		type: 'submit',
 		class: 'btn btn-primary',
 		value:'保存' 
 	}));
 	
-	return Html.form(formProperties).html(inputHtmls);
+	scriptHtml = Html.script().html('$(function () { jd.onlySubmitOnce("jdb-form", "jdb-submit"); });');
+	console.log(scriptHtml);
+	return Html.form(formProperties).html(inputHtmls) + scriptHtml;
 	
 }

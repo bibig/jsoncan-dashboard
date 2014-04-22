@@ -9,6 +9,7 @@ var Schemas = require('./schemas');
 var Upload = require('./upload');
 var async = require('async');
 var path = require('path');
+var debug = require('debug')('dashboard');
 
 function indexPage (dashboards) {
   var routesMap = {};
@@ -87,7 +88,6 @@ Controller.prototype.enable = function () {
 	}
 	
 	if (this.hasListAction) {
-	  // console.log(this.routes.listRoute(':page'));
 		this.dashboards.app.get(this.routes.listRoute(':page'), list);
 	}
 	
@@ -122,7 +122,7 @@ Controller.prototype.enable = function () {
 	}
 	
 	if (this.hasDeleteAction) {
-		this.dashboards.app.get(this.routes.deleteRoute(':id'), del);
+		this.dashboards.app.delete(this.routes.deleteRoute(':id'), del);
 	}
 };
 
@@ -196,7 +196,6 @@ Controller.prototype.listAction = function () {
 	if (config === false ) { return false; }
 	
 	return function (req, res, next) {
-		
 		var currentPage = parseInt( req.params.page || 1 , 10);
 		var locals = utils.clone(config.locals);
 		var tasks = {};
@@ -234,6 +233,7 @@ Controller.prototype.listAction = function () {
 						edit: self.hasEditAction ? function (_id) { return self.routes.editRoute(_id); } : false,
 						delete: self.hasDeleteAction ? function (_id) { return self.routes.deleteRoute(_id); } : false
 					};
+					config.token = self.csrfToken(req);
 					callback(null, helpers.list.renderTable(records, config));
 				}
 			});
@@ -262,6 +262,7 @@ Controller.prototype.listAction = function () {
 				locals.list = results.list;
 				locals.pages = results.pages || '';
 				locals.title = helpers.list.renderTitle(self.views.viewTitle('list'), addLink);
+				// locals.token = self.csrfToken(req);
 				self.views.render(res, 'list', locals);
 			}
 		});
@@ -299,6 +300,7 @@ Controller.prototype.viewAction = function () {
         config.hasMany.schemas = new Schemas(self.dashboards.can.open(config.hasMany.table).getFields());
         // locals.hasManyList = helpers.list.renderTable(record[config.hasMany.table], config.hasMany); 
       }
+      config.token = self.csrfToken(req);
       locals.table = helpers.view.render(record, config);
       self.views.render(res, 'view', locals);
 		}
@@ -357,7 +359,6 @@ Controller.prototype.uploadAction = function () {
           if (e) {
             next(e);
           } else {
-            // console.log(self.schemas.getFileRelatedData(record));
             utils.merge(self.getPostData(req), self.schemas.getFileRelatedData(record));
             next();
           }
@@ -554,6 +555,7 @@ Controller.prototype.editAction = function (Table, config) {
 	
 };
 
+// should use delete method
 Controller.prototype.deleteAction = function () {
 	var self = this;
 	var config = this.initActionConfig('delete');
@@ -562,16 +564,17 @@ Controller.prototype.deleteAction = function () {
 	
 	return function (req, res, next) {
 		var _id = req.params.id;
+		  
 		self.Table.remove(_id, function (e, record) {
 			if (e) {
-				next(e);
+			  res.json(500, { error: e.message });
 			} else {
 			  self.decrementRecordCount();
 				self.schemas.deleteFiles(record, null, function (e) {
 					if (e) {
-						next(e);
+						res.json(500, { error: e.message });
 					} else {
-						res.redirect(self.routes.rootRoute());	
+					  res.json({ redirect: self.routes.rootRoute() });
 					}
 				});
 			}

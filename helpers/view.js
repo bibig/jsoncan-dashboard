@@ -14,10 +14,11 @@ var Media = require('./media');
 
 function render (record, config) {
 	var rows = [];
-	var scriptHtml;
+	var scriptHtml = '';
 	var schemas = config.schemas;
 	var editLink, deleteLink, addLink;
 	var hasManyPartHtml;
+	var scripts = [];
 	
 	record = record || {};
 	
@@ -51,7 +52,7 @@ function render (record, config) {
 	}
 	
 	editLink = config.links.edit ? a({href: config.links.edit, class: 'btn btn-warning'}).html('编辑') : '';
-	deleteLink = config.links.delete ? a({href: '#', 'onclick': 'del(\'' + config.links.delete + '\');', class: 'btn btn-danger'}).html('删除') : '';
+	deleteLink = config.links.delete ? a({href: '#', 'onclick': 'jd.del(\'' + config.links.delete + '\');', class: 'btn btn-danger'}).html('删除') : '';
 	addLink = config.links.add ? a({href: config.links.add, class: 'btn btn-success'}).html('新增') : '';
 	
 	rows.push(
@@ -65,15 +66,11 @@ function render (record, config) {
 				addLink
 			)
 		)
-	);
+	);	
 	
-	scriptHtml = Html.script().html(
-		function del(url) {
-			if (confirm('您确定要删除这条记录?')) {
-				window.location = url;
-			}
-		}
-	);
+	if (config.token) {
+	  scriptHtml = Html.script().html('$(function () { jd.setCsrf("' + config.token + '"); });');
+	}
 
 	return table('table table-bordered table-record').html(rows) + scriptHtml;
 }

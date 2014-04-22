@@ -7,8 +7,8 @@ var div = Html.div;
 
 function render (records, config) {
   var items = [];
-  console.log(records);
-  console.log(config);
+  // console.log(records);
+  // console.log(config);
   records.forEach(function (record ) {
     var name = config.schemas.getRealName(config.viewLinkField);
     var value = record[name];
