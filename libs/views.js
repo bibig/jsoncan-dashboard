@@ -68,7 +68,7 @@ Views.prototype.breadcrumbs = function (layers) {
 	var li = Htmler.li;
 	var a = Htmler.a;
 	var list = [
-		li().html(a({href: this.controller.routes.dashboardsRoute()}).html(this.controller.dashboards.settings.title))
+		li().html(a({href: this.controller.routes.mount}).html(this.controller.dashboards.settings.title))
 	];
 	
 	layers.forEach(function (layer) {

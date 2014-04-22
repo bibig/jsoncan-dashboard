@@ -13,13 +13,13 @@ var path = require('path');
 function indexPage (dashboards) {
   var routesMap = {};
   var tables = Object.keys(dashboards.modules);
-  var prefix = dashboards.settings.prefix;
+  var mount = dashboards.settings.mount;
   var indexAction;
   
   if (tables.length === 0) { return; }
   
   tables.forEach(function (name) {
-    routesMap[name] = Routes.create(prefix, name);
+    routesMap[name] = Routes.create(mount, name);
   });
   
   indexAction = function (req, res, next) {
@@ -30,9 +30,7 @@ function indexPage (dashboards) {
     res.render(view, locals);
   };
   
-  
-  dashboards.app.get(Routes.indexRoute(prefix), indexAction);
-  // console.log(dashboards.modules);
+  dashboards.app.get(mount, indexAction);
 }
 
 function create (dashboards, name, actions) {
@@ -43,11 +41,11 @@ function Controller (dashboards, name, actions) {
   this.dashboards = dashboards;
 	this.Table = dashboards.can.open(name);
 	this.settings = dashboards.modules[name];
-	this.prefix = this.dashboards.settings.prefix;
+	this.mount = this.dashboards.settings.mount;
 	this.actions = actions;
 	
 	this.schemas = new Schemas(this.Table.getFields());
-	this.routes = Routes.create(this.prefix, name);
+	this.routes = Routes.create(this.mount, name);
 	this.views = new Views(this);
 		
 	this.hasListAction = true;
@@ -293,7 +291,7 @@ Controller.prototype.viewAction = function () {
       };
       
       if (config.hasMany) {
-        hasManyRoutes = Routes.create(self.prefix, config.hasMany.table);
+        hasManyRoutes = Routes.create(self.mount, config.hasMany.table);
         config.hasMany.links = {
           view: function (_id) { return hasManyRoutes.viewRoute(_id);}
         };
@@ -439,6 +437,7 @@ Controller.prototype.addAction = function () {
 		
 		function renderForm () {
 			var locals = utils.clone(config.locals);
+			config.token = self.csrfToken(req);
 			locals.form = helpers.form.render(self.Table.table, config);
 			self.views.render(res, 'add', locals);
 		}
@@ -449,6 +448,14 @@ Controller.prototype.addAction = function () {
 			}
 		});
 	};
+};
+
+// 并非强制，express app如果有设置csrf, 则运用。
+Controller.prototype.csrfToken = function (req) {
+  if (req.csrfToken) {
+    return req.csrfToken();
+  }
+  return null;
 };
 
 Controller.prototype.checkMaxAction = function () {
@@ -516,6 +523,7 @@ Controller.prototype.editAction = function (Table, config) {
 		function renderForm () {
 			config.errors = req.errors || {};
 			config.action = self.routes.editRoute(_id);
+			config.token = self.csrfToken(req);
 			locals.form = helpers.form.render(self.Table.table, config);
 			self.views.render(res, 'edit', locals);
 		}

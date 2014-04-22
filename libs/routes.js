@@ -1,29 +1,18 @@
-// module.exports = exports = Routes;
 exports.create = create;
-exports.indexRoute = indexRoute;
 
 var path = require('path');
 
-function indexRoute (prefix) {
-  return '/' + prefix;
+function create (mount, table) {
+  return new Routes(mount, table);
 }
 
-function create (prefix, table) {
-  return new Routes(prefix, table);
-}
-
-function Routes (prefix, table) {
-  this.prefix = prefix;
+function Routes (mount, table) {
+  this.mount = mount;
   this.table = table;
 };
 
-Routes.prototype.dashboardsRoute = function () {
-	return '/' + this.prefix;
-};
-
-
 Routes.prototype.rootRoute = function () {
-	return this.dashboardsRoute() + '/' + this.table;
+	return path.join(this.mount, this.table);
 };
 
 Routes.prototype.listRoute = function (page) {

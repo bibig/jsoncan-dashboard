@@ -2,7 +2,7 @@
  *
  *  var dashboard = new Dashboard(app, can);
  *  dashboard.bind('news', config);
- *  prefix: 'admin',
+ *  mount: 'admin',
 		title: '后台管理', 
 		// routeRoot: ['/admin', '后台管理'],
 		viewPath: __dirname + '/../views/dashboard/',
@@ -30,7 +30,7 @@ function Dashboards (app, can, settings) {
 	this.app = app;
 	this.can = can;
 	this.settings = utils.merge(settings, {
-	  prefix: 'admin'
+	  mount: '/admin'
 	});
 	this.modules = {};
 }

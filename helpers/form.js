@@ -51,6 +51,9 @@ function render (tableName, config) {
 	// 当checkbox没有被选中时， req.body里面会找不到这个字段。比如:有一个name='status'的checkbox，不选择提交后，req.body.status是undefined
 	// 加一个_fields，就是告诉服务端，这个form里面有哪些字段。
 	inputHtmls.push(Html.input({name: "_fields", type: 'hidden', value: showFields.join(',')}));
+	if (config.token) {
+  	inputHtmls.push(Html.input({name: "_csrf", type: 'hidden', value: config.token}));
+  }
 	
 	inputHtmls.push(Html.input({
 		type: 'submit',
