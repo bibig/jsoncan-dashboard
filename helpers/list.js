@@ -40,16 +40,16 @@ function renderTable (records, config) {
 	records.forEach(function (record) {
 		var trHtml = '';
 		var editLink = '', deleteLink = '';
+		var viewLinkField = schemas.getRealName(config.viewLinkField);
 		
 		schemas.forEachField(function (name, field) {
-			var ele = '';
 			var value = record[field.name];
+			var ele = schemas.presentValue(name, value);
 			
-			if (field.name == config.viewLinkField) {
-				ele = a({href: config.links.view(record._id)}).html(value);
-			} else {
-				ele = schemas.presentValue(name, value);
+			if (field.name == viewLinkField) {
+				ele = a({href: config.links.view(record._id)}).html(ele);
 			}
+			
 			trHtml += td().html(ele);
 		
 		}, config.showFields);

@@ -36,6 +36,7 @@ Views.prototype.render = function (res, name, locals) {
 	
 	locals.pageTitle = locals.pageTitle || title;
 	locals.breadcrumbs = this.breadcrumbs(layers);
+	// console.log(locals);
 	res.render(this.viewFile(name), locals);
 };
 

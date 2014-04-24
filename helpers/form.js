@@ -65,7 +65,7 @@ function render (tableName, config) {
 	}));
 	
 	scriptHtml = Html.script().html('$(function () { jd.onlySubmitOnce("jdb-form", "jdb-submit"); });');
-	console.log(scriptHtml);
+	
 	return Html.form(formProperties).html(inputHtmls) + scriptHtml;
 	
 }

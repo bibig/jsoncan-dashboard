@@ -287,7 +287,7 @@ Controller.prototype.viewAction = function () {
 		  
 		  config.links = {
           add: self.hasAddAction && self.isAvailableForAdd() ? self.routes.addRoute() : false,
-          edit: self.hasEditAction ? self.routes.editRoute(_id) : false,
+          edit: (self.hasEditAction && _id ) ? self.routes.editRoute(_id) : false,
           delete: self.hasDeleteAction ? self.routes.deleteRoute(_id) : false
       };
       
@@ -440,6 +440,7 @@ Controller.prototype.addAction = function () {
 			var locals = utils.clone(config.locals);
 			config.token = self.csrfToken(req);
 			locals.form = helpers.form.render(self.Table.table, config);
+			locals.errors = config.errors;
 			self.views.render(res, 'add', locals);
 		}
 		
@@ -459,6 +460,7 @@ Controller.prototype.csrfToken = function (req) {
   return null;
 };
 
+// 如果超出了最大记录数，则不允许再增加记录，直接返回至默认路径
 Controller.prototype.checkMaxAction = function () {
   var self = this;
   
@@ -521,6 +523,10 @@ Controller.prototype.editAction = function (Table, config) {
 		var _id = req.params.id;
 		var locals = utils.clone(config.locals);
 		
+		if (!_id) {
+		  return next(new Error('invalid param found'));
+		}
+		
 		function renderForm () {
 			config.errors = req.errors || {};
 			config.action = self.routes.editRoute(_id);
@@ -529,11 +535,12 @@ Controller.prototype.editAction = function (Table, config) {
 			self.views.render(res, 'edit', locals);
 		}
 		
-		
 		if (req.method == 'GET') {
 			self.Table.find(_id).exec(function (e, record) {
 				if (e) {
 					next(e);
+				} else if ( ! record ) {
+				  next(new Error('no data found!'));
 				} else {
 					self.setReferencesValues(config.showFields, function (e) {
 						if (e) { next(e);} else {

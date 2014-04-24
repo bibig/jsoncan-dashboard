@@ -64,7 +64,7 @@ function save (callback) {
 				moveImage.call(_this, name, callback);
 			},
 			function (callback) {
-				cropImage.call(_this, name, callback);
+				trimImage.call(_this, name, callback);
 			},
 			function (callback) {
 				thumbImage.call(_this, name, callback);
@@ -94,16 +94,28 @@ function moveImage (name, callback) {
 	});
 }
 
-function cropImage (name, callback) {
+function trimImage (name, callback) {
 	var field = this.schemas.getField(name);
 	var targetImage = path.join(field.path, this.data[name]);
 	var imageSize = field.imageSize;
+	var gravities , gravity, imgObj;
 		
 	if (Array.isArray(imageSize)) {
-		gm(targetImage)
-			.gravity('North') // NorthWest|North|NorthEast|West|Center|East|SouthWest|South|SouthEast
-			.crop(imageSize[0], imageSize[1])
-			.write(targetImage, callback);
+	  imgObj = gm(targetImage);
+	  if (field.cropImage) {
+	    gravities = ['NorthWest', 'North', 'NorthEast', 'West', 'Center', 'East', 'SouthWest', 'South', 'SouthEast'];
+	    gravity = gravities.indexOf(field.cropImage) > -1 ? field.cropImage : 'North';
+	    imgObj = imgObj.gravity(gravity).crop(imageSize[0], imageSize[1]);
+	  } else {
+	    if (field.isFixedSize) {
+  	    imgObj = imgObj.resize(imageSize[0], imageSize[1], '!');
+  	  } else {
+  	    imgObj = imgObj.resize(imageSize[0], imageSize[1]);
+  	  }
+	  }
+	  
+		imgObj.write(targetImage, callback);
+
 	} else {
 		callback();
 	}
