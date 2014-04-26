@@ -29,14 +29,13 @@ jd.del = function (url) {
 };
 
 jd.onlySubmitOnce = function (formId, btnId) {
-  $('#' + formId).on('submit',function(e){
+  $('#' + formId).on('submit',function (e) {
     var $form = $(this);
-
     if ($form.data('submitted') === true) {
-      $('#' + btnId).val('提交中...').attr('disabled', 'disabled');
       // Previously submitted - don't submit again
       e.preventDefault();
     } else {
+      $('#' + btnId).val('提交中...').attr('disabled', 'disabled');
       // Mark it so that the next submit can be ignored
       $form.data('submitted', true);
     }

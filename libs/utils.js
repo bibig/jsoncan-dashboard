@@ -1,9 +1,11 @@
+exports.filter = filter;
 exports.merge = merge;
 exports.mergeArray = mergeArray;
 exports.clone = clone;
 exports.cloneArray = cloneArray;
 exports.hasKeys = hasKeys;
 exports.fileExt = fileExt;
+exports.humanFileSize = humanFileSize;
 
 function merge (targetObj, defaultObj) {
 	if (! targetObj) targetObj = {};
@@ -15,6 +17,18 @@ function merge (targetObj, defaultObj) {
 		}
 	});
 	return targetObj;						 
+}
+
+function filter (target, keys) {
+  var safe = {};
+  
+  keys.forEach(function (key) {
+    if (target[key] !== undefined && target[key] !== null && target[key] !== '') {
+      safe[key] = target[key];
+    }
+  });
+  
+  return safe;
 }
 
 function cloneArray (target) {
@@ -70,3 +84,11 @@ function fileExt (filename) {
 	var info = filename.split('.');
 	return info[info.length - 1];
 }
+
+function humanFileSize (size) {
+	if (size < 1048576) { // 1m
+		return parseInt(size * 10 / 1024) / 10  + 'k';
+	} else {
+		return parseInt(size * 10 / 1048576 ) / 10  + 'm';
+	}
+};

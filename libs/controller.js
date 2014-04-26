@@ -6,6 +6,7 @@ var utils = require('./utils');
 var Routes = require('./routes');
 var Views = require('./views');
 var Schemas = require('./schemas');
+var Present = require('./present');
 var Upload = require('./upload');
 var async = require('async');
 var path = require('path');
@@ -40,12 +41,13 @@ function create (dashboards, name, actions) {
 
 function Controller (dashboards, name, actions) {
   this.dashboards = dashboards;
+  this.tableName = name;
 	this.Table = dashboards.can.open(name);
 	this.settings = dashboards.modules[name];
 	this.mount = this.dashboards.settings.mount;
 	this.actions = actions;
 	
-	this.schemas = new Schemas(this.Table.getFields());
+	this.schemas = Schemas.create(this.Table.getFields());
 	this.routes = Routes.create(this.mount, name);
 	this.views = new Views(this);
 		
@@ -160,6 +162,7 @@ Controller.prototype.initActionConfig = function (name, defaults) {
 	}
 	
 	defaults = defaults || {
+	  routes: this.routes,
 		schemas: this.schemas,
 		showFields: this.schemas.inputFields(),
 		locals: {}
@@ -196,24 +199,86 @@ Controller.prototype.listAction = function () {
 	if (config === false ) { return false; }
 	
 	return function (req, res, next) {
+	  // console.log(req.query);
 		var currentPage = parseInt( req.params.page || 1 , 10);
 		var locals = utils.clone(config.locals);
 		var tasks = {};
-		var selectFields = self.schemas.getRealNames(config.showFields);
+		var filters = self.schemas.safeFilters(req.query || {});
+		filter = utils.merge(filters, config.filters);
 		
-		var referenceNames = self.schemas.getReferenceNames(config.showFields);
-		
-		if (selectFields.indexOf('_id') == -1) {
-			selectFields.unshift('_id');
+		if (config.query) {
+		  tasks.query = function (callback) {
+		    var info = config.query.name.split('.');
+		    var table, textField, fields, query, schemaDefinedValues;
+		    var fieldName = info[1] ? self.schemas.getReferenceField(info[0]) : info[0];
+		    var queryConfig = {
+		      title: config.query.title,
+		      currentValue: req.query[fieldName],
+		      qname: config.query.ref || fieldName,
+		      routes: self.routes
+		    };
+		    var schemaValuesToRecords = function (values, name) { // prepare records for render filterDropdown
+          var records = [];
+          
+          if (Array.isArray(values)) {
+            for (var i = 0; i < values.length; i++) {
+              var item = { _id: i };
+              item[name] = values[i];
+              records.push(item);
+            }
+          } else {
+            Object.keys(values).forEach(function (key) {
+              var item = { _id: key };
+              item[name] = values[key];
+              records.push(item);
+            });
+          }
+  
+          return records;
+        }; // end of schemaValuesToRecords
+		    
+		    
+		    if (info.length == 1) { // map or array field
+		      schemaDefinedValues = self.schemas.getField(info[0], 'values');
+		      queryConfig['textField'] = info[0];
+		      callback(null, helpers.list.renderFilterDropdown(schemaValuesToRecords(schemaDefinedValues, info[0]), queryConfig));
+		      return;
+		    }
+		    
+		    table = info[0];
+		    textField = info[1];
+		    fields = ['_id', textField];
+		    query = self.dashboards.can.open(table).query(config.query.filter || {}).select(fields).limit(config.query.limit || 50);
+		    
+		    if (config.query.order) {
+		      query.order(config.query.order[0], config.query.order[1] || false);
+		    }
+		    
+		    query.exec(function (e, records) {
+		      // var queryConfig;
+		      if (e) { callback(e); } else if (records.length == 0) { 
+		        callback(null, '');
+		      } else  {
+		        queryConfig['textField'] = textField;
+            callback(null, helpers.list.renderFilterDropdown(records, queryConfig));
+          }
+		    });
+		    
+		  };
 		}
 		
 		tasks.list = function (callback) {
+		  var selectFields = Present.getFieldNames(config.showFields);
+      var referenceNames = self.schemas.getReferenceNames(selectFields);
+      if (selectFields.indexOf('_id') == -1) {
+        selectFields.unshift('_id');
+      }
 			var skip = (currentPage - 1) * config.pageSize;
-			var query = self.Table.query(config.filters)
+			var	query = self.Table.query(filters)
 								.select(selectFields)
 								.skip(skip)
 								.limit(config.pageSize);
-		
+
 			referenceNames.forEach(function (name) {
 				query.ref(name);
 			});
@@ -228,11 +293,8 @@ Controller.prototype.listAction = function () {
 			
 			query.exec(function (e, records) {
 				if (e) { callback(e); } else {
-					config.links = {
-						view: self.hasAddAction ? function (_id) { return self.routes.viewRoute(_id);} : false,
-						edit: self.hasEditAction ? function (_id) { return self.routes.editRoute(_id); } : false,
-						delete: self.hasDeleteAction ? function (_id) { return self.routes.deleteRoute(_id); } : false
-					};
+					config.hasEditAction = !config.readonly ? self.hasEditAction : false;
+					config.hasDeleteAction = !config.readonly ? self.hasDeleteAction : false;
 					config.token = self.csrfToken(req);
 					callback(null, helpers.list.renderTable(records, config));
 				}
@@ -241,14 +303,14 @@ Controller.prototype.listAction = function () {
 		
 		if (config.showPage) {
 			tasks.pages = function (callback) {
-				self.Table.query(config.filters).count(function (e, count) {
+				self.Table.query(filters).count(function (e, count) {
 					var pageCount;
 					if (e) { callback(e);} else {
 						pageCount = Math.ceil(count / config.pageSize);
 						callback(null, helpers.pages.render(
 							currentPage,
 							pageCount,
-							function (page) { return self.routes.listRoute(page)}
+							function (page) { return self.routes.listRoute(page, req.query)}
 						));
 					}
 				});
@@ -256,12 +318,13 @@ Controller.prototype.listAction = function () {
 		}
 
 		async.series(tasks, function (e, results) {
-		  var addLink;
+		  var addLinkUrl, addLink;
 			if (e) { next(e);} else {
-			  addLink = self.hasAddAction && self.isAvailableForAdd() ? self.routes.addRoute() : '';
+			  addLinkUrl = (self.hasAddAction && self.isAvailableForAdd()) ? self.routes.addRoute(req.query) : false;
+			  addLink = helpers.list.renderAddLink(addLinkUrl);
 				locals.list = results.list;
 				locals.pages = results.pages || '';
-				locals.title = helpers.list.renderTitle(self.views.viewTitle('list'), addLink);
+				locals.title = helpers.list.renderTitle(self.views.viewTitle('list'), addLink, results.query);
 				// locals.token = self.csrfToken(req);
 				self.views.render(res, 'list', locals);
 			}
@@ -280,30 +343,25 @@ Controller.prototype.viewAction = function () {
 		var _id = req.params.id || null;
 		var locals = utils.clone(config.locals);
 		var query;
-		var referenceNames = self.schemas.getReferenceNames(config.showFields);
+		var selectFields = Present.getFieldNames(config.showFields);
+		var referenceNames = self.schemas.getReferenceNames(selectFields);
 		
 		function _render (record) {
 		  var hasManyRoutes;
-		  
-		  config.links = {
-          add: self.hasAddAction && self.isAvailableForAdd() ? self.routes.addRoute() : false,
-          edit: (self.hasEditAction && _id ) ? self.routes.editRoute(_id) : false,
-          delete: self.hasDeleteAction ? self.routes.deleteRoute(_id) : false
-      };
+		  config.hasAddAction = self.hasAddAction ? self.isAvailableForAdd() : false;
+		  config.hasEditAction = !config.readonly ? self.hasEditAction : false;
+			config.hasDeleteAction = !config.readonly ? self.hasDeleteAction : false;
       
       if (config.hasMany) {
-        hasManyRoutes = Routes.create(self.mount, config.hasMany.table);
-        config.hasMany.links = {
-          view: function (_id) { return hasManyRoutes.viewRoute(_id);}
-        };
+        config.hasMany.routes = Routes.create(self.mount, config.hasMany.table);
         config.hasMany.readonly = true;
-        config.hasMany.schemas = new Schemas(self.dashboards.can.open(config.hasMany.table).getFields());
-        // locals.hasManyList = helpers.list.renderTable(record[config.hasMany.table], config.hasMany); 
+        config.hasMany.schemas = Schemas.create(self.dashboards.can.open(config.hasMany.table).getFields());
       }
+      
       config.token = self.csrfToken(req);
       locals.table = helpers.view.render(record, config);
       self.views.render(res, 'view', locals);
-		}
+		} // end of function
 		
 		if (!_id) {
 		  query = self.Table.query().limit(1); // for only one record table
@@ -432,7 +490,9 @@ Controller.prototype.addAction = function () {
 	if (config === false ) { return false; }
 	
 	return function (req, res, next) {
-		config.data = self.getPostData(req) || {};
+		config.data = {};
+		utils.merge(config.data, self.getPostData(req));
+		utils.merge(config.data, req.query);
 		config.errors = req.errors || {};
 		config.action = self.routes.addRoute();
 		

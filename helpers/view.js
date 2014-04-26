@@ -1,5 +1,6 @@
 exports.render = render;
 
+var Present = require('../libs/present');
 var Html = require('htmler');
 var table = Html.table;
 // var tbody = Html.tbody;
@@ -16,24 +17,23 @@ function render (record, config) {
 	var rows = [];
 	var scriptHtml = '';
 	var schemas = config.schemas;
-	var editLink, deleteLink, addLink;
+	var links = [];
+	// var editLink, deleteLink, addLink;
 	var hasManyPartHtml;
 	var scripts = [];
+	var present = Present.create(config, record);
 	
-	record = record || {};
-	
-	//console.log(config.showFields);
-	schemas.forEachField(function (name, field) {
-		var value = record[field.name];
-		if (value === undefined && value === '') {
-		  value = null;
-		}
-
-		rows.push(tr().html(
-			th().html(field.text || field.name),
-			td().html(schemas.presentValue(name, value))
-		));
-	}, config.showFields);
+	config.showFields.forEach(function (name) {
+	  var fieldName = Present.getFieldName(name);
+	  var field = schemas.getField(fieldName);
+    
+    if (field) {
+      rows.push(tr().html(
+        th({ width: '12%' }).html(field.text || field.name),
+        td().html(present.show(name))
+      ));
+    }
+	});
 	
 	if (config.hasMany) {
 	  switch (config.hasMany.style) {
@@ -51,20 +51,31 @@ function render (record, config) {
 	  ));
 	}
 	
-	editLink = config.links.edit ? a({href: config.links.edit, class: 'btn btn-warning'}).html('编辑') : '';
-	deleteLink = config.links.delete ? a({href: '#', 'onclick': 'jd.del(\'' + config.links.delete + '\');', class: 'btn btn-danger'}).html('删除') : '';
-	addLink = config.links.add ? a({href: config.links.add, class: 'btn btn-success'}).html('新增') : '';
+	if (config.hasEditAction) {
+	  links.push(a({href: config.routes.editRoute(record._id), class: 'btn btn-warning'}).html(
+	    Html.span('glyphicon glyphicon-wrench').html(),
+	    ' 编辑'
+	  ));
+	}
+	
+	if (config.hasDeleteAction) {
+	  links.push(a({href: '#', 'onclick': 'jd.del(\'' + config.routes.deleteRoute(record._id) + '\');', class: 'btn btn-danger'}).html(
+	    Html.span('glyphicon glyphicon-trash').html(),
+	    ' 删除'
+	  ));
+	}
+	
+	if (config.hasAddAction) {
+	  links.push(a({href: config.routes.addRoute(), class: 'btn btn-success'}).html(
+	    Html.span('glyphicon glyphicon-plus').html(),
+	    ' 新增'
+	  ));
+	}
 	
 	rows.push(
 		tr().html(
-			td().html(),
-			td().html(
-				editLink,
-				span().html('&nbsp;'),
-				deleteLink,
-				span().html('&nbsp;'),
-				addLink
-			)
+			th().html(),
+			td().html(links.join('&nbsp;'))
 		)
 	);	
 	

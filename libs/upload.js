@@ -99,7 +99,11 @@ function trimImage (name, callback) {
 	var targetImage = path.join(field.path, this.data[name]);
 	var imageSize = field.imageSize;
 	var gravities , gravity, imgObj;
-		
+	
+	if (typeof imageSize == 'number') {
+	  imageSize = [imageSize];
+	}
+	
 	if (Array.isArray(imageSize)) {
 	  imgObj = gm(targetImage);
 	  if (field.cropImage) {
@@ -110,7 +114,11 @@ function trimImage (name, callback) {
 	    if (field.isFixedSize) {
   	    imgObj = imgObj.resize(imageSize[0], imageSize[1], '!');
   	  } else {
-  	    imgObj = imgObj.resize(imageSize[0], imageSize[1]);
+  	    if (imageSize.length == 2) {
+    	    imgObj = imgObj.resize(imageSize[0], imageSize[1]);
+    	  } else {
+    	    imgObj = imgObj.resize(imageSize[0]);
+    	  }
   	  }
 	  }
 	  
@@ -130,6 +138,10 @@ function thumbImage (name, callback) {
 		thumbPath = this.schemas.thumbPath(field);
 		thumbImage = path.join(thumbPath, this.data[name]);
 		thumbSize = field.thumbSize;
+	 
+	  if (typeof thumbSize == 'number') {
+	    thumbSize = [thumbSize];
+  	}
 	
 		if (Array.isArray(thumbSize)) {
 			checkFilePath(thumbPath, function (e) {

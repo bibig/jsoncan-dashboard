@@ -1,4 +1,4 @@
-module.exports = exports = create;
+exports.create = create;
 
 var Html = require('htmler');
 var path = require('path');
@@ -8,33 +8,16 @@ var fs = require('fs');
 var inflection = require('inflection');
 
 function create (fields) {
-	this.fields = fields;
-	this.inputFields = inputFields;
-	this.getField = getField;
-	this.forEachField = forEachField;
-	this.valueToImage = valueToImage;
-	this.hasUploadField = hasUploadField;
-	this.isFileField = isFileField;
-	this.checkFile = checkFile;
-	this.thumbPath = thumbPath;
-	this.humanFileSize = humanFileSize;
-	this.thumbImage = thumbImage;
-	this.thumbUrl = thumbUrl;
-	this.presentValue = presentValue;
-	this.getRealName = getRealName;
-	this.getRealNames = getRealNames;
-	this.getPresentType = getPresentType;
-	this.getPresentKey = getPresentKey;
-	this.convert = convert;
-	this.deleteFiles = deleteFiles;
-	this.getReferences = getReferences;
-	this.getReferenceNames = getReferenceNames;
-	this.addValues = addValues;
-	this.getFileRelatedData = getFileRelatedData;
+  return new Schemas(fields);
 }
 
-// @return array
-function inputFields () {
+/* ------------Schemas construction-------------- */
+
+function Schemas  (fields) {
+  this.fields = fields;
+}
+
+Schemas.prototype.inputFields = function () {
 	var list = [];
 	this.forEachField(function (name, field) {
 		list.push(name);
@@ -42,13 +25,17 @@ function inputFields () {
 		return field.isInput;
 	})
 	return list;
-}
+};
+
+Schemas.prototype.safeFilters = function (hash) {
+  return utils.filter(hash, Object.keys(this.fields));
+};
 
 /**
  * @callback: function
  * @whiteList: array or hash or function
  */
-function forEachField (callback, whiteList) {
+Schemas.prototype.forEachField = function (callback, whiteList) {
 	var self = this;
 	var filter;
 	if ( !whiteList ) {
@@ -61,26 +48,23 @@ function forEachField (callback, whiteList) {
 	}
 	
 	whiteList.forEach(function (name) {
-		var field;
-		var realName = getRealName(name);
-		
-		field = self.fields[realName]; //允许 photo|image, photo|thumb, config.name  这类格式
+		var field = self.fields[name];
 		
 		if (filter) {
 			if (!filter(field)) return;
 		}
 		
 		if (field) {
-			field.name = realName; // important!
+			field.name = name; // important!
 			callback(name, field, self);
 		} else {
 			// throw new Error('invalid field: ' + name);
 		}
 		
 	});
-}
+};
 
-function getFileRelatedData (record) {
+Schemas.prototype.getFileRelatedData = function (record) {
   var data = {};
   this.forEachField(function (name, field) {
     if (field.inputType == 'file') {
@@ -91,27 +75,39 @@ function getFileRelatedData (record) {
     }
   }, record);
   return data;
-}
+};
 
-function getField (name) {
-	return this.fields[name];
-}
+Schemas.prototype.getField = function (name, key) {
+  var field = this.fields[name];
+	return key ? field[key] : field;
+};
 
-function valueToImage (name, value) {
-	var field = this.getField(name);
-	return Html.img({src: path.join(field.url, value)});
-}
+Schemas.prototype.imageSrc = function (name, value) {
+  var field = this.getField(name);
+  if (field.url) {
+  	return path.join(field.url, value);
+  }
+  return null;
+};
 
-function thumbImage (name, value) {
+Schemas.prototype.thumbSrc = function (name, value) {
+  var field = this.getField(name);
+	if (field.hasThumb) {
+		return path.join(this.thumbUrl(field), value);
+	}
+	return null;
+};
+
+Schemas.prototype.thumbImage = function (name, value) {
 	var field = this.getField(name);
 	if (field.hasThumb) {
 		return Html.img({src: path.join(this.thumbUrl(field), value)});
 	} else {
 		return false;
 	}
-}
+};
 
-function hasUploadField () {
+Schemas.prototype.hasUploadField = function () {
 	var has = false;
 	this.forEachField(function (name, field) {
 		if (!has && field.inputType == 'file') {
@@ -122,7 +118,7 @@ function hasUploadField () {
 }
 
 //@isEditAction: 修改记录时，应该允许不上传文件，因为有可能只是修改其它字段
-function checkFile (name, file) {
+Schemas.prototype.checkFile = function (name, file) {
 	var field = this.getField(name);
 	var ext;
 	function addSource (s) {
@@ -154,45 +150,85 @@ function checkFile (name, file) {
 	
 	if (field.maxFileSize) {
 		if (field.maxFileSize < file.size) {
-			return addSource('文件太大, 文件最大限制' + humanFileSize(field.maxFileSize));
+			return addSource('文件太大, 文件最大限制' + utils.humanFileSize(field.maxFileSize));
 		}
 	}
 	return true;
 	
-}
+};
 
-function isFileField (field) {
+Schemas.prototype.isFileField = function (field) {
 	if (typeof field == 'string') {
 		field = this.getField(field);
 	}
 	
 	if (!field) return false;
 	return field.inputType == 'file';
-}
+};
 
-function humanFileSize (size) {
-	if (size < 1048576) { // 1m
-		return parseInt(size * 10 / 1024) / 10  + 'k';
-	} else {
-		return parseInt(size * 10 / 1048576 ) / 10  + 'm';
-	}
-}
-
-function thumbPath (field) {
+Schemas.prototype.thumbPath = function (field) {
 	if (typeof field == 'string') {
 		field = this.getField(field);
 	}
 	return field.thumbPath ? field.thumbPath : path.join(field.path, 'thumbs');
-}
+};
 
-function thumbUrl (field) {
+Schemas.prototype.thumbUrl = function (field) {
 	if (typeof field == 'string') {
 		field = this.getField(field);
 	}
 	return field.thumbUrl ? field.thumbUrl : path.join(field.url, 'thumbs');
-}
+};
 
-function presentValue (name, value) {
+Schemas.prototype.getReferenceTable = function (field) {
+  if (typeof field == 'string') {
+    field = this.getField(field);
+  }
+  
+	if (field.ref) {
+		return field.ref;
+	} else {
+		return inflection.pluralize(field.name.substring(1));
+	}
+};
+
+Schemas.prototype.getReferenceField = function (table) {
+  return '_' + inflection.singularize(table);
+};
+
+Schemas.prototype.getReferenceNames = function (showFields) {
+	var list = [];
+	var self = this;
+	
+	this.forEachField(function (name, field) {
+		if (field.type == 'ref') {
+			list.push(self.getReferenceTable(field));
+		}
+	}, showFields);
+	return list;
+};
+
+Schemas.prototype.getReferences = function (showFields) {
+	var map = {};
+	var self = this;
+	
+	this.forEachField(function (name, field) {
+		if (field.type === 'ref') {
+			map[name] = utils.merge({
+				table: self.getReferenceTable(field)
+			}, field.prepare || {});
+		}
+	}, showFields);
+	
+	return map;
+};
+
+Schemas.prototype.isReference = function (name) {
+  var field = this.getField(name);
+  return field.type === 'ref';
+};
+
+Schemas.prototype.presentValue = function (name, value) {
 	var presentType, presentKey, name, field;
 	// console.log(name, value);
 	if (value === null || value === undefined || value === '') {
@@ -200,9 +236,9 @@ function presentValue (name, value) {
 		return '';
 	}
 	
-	presentType = this.getPresentType(name);
-	presentKey = this.getPresentKey(name);
-	name = this.getRealName(name);
+	presentType = getPresentType(name);
+	presentKey = getPresentKey(name);
+	name = getRealName(name);
 	field = this.getField(name);
 	
 	switch (presentType) {
@@ -225,33 +261,9 @@ function presentValue (name, value) {
 	}
 	// console.log('2~', value);
 	return value;
-}
+};
 
-function getRealNames (names) {
-	var realNames = [];
-	names.forEach(function (name) {
-		realNames.push(getRealName(name));
-	});
-	return realNames;
-}
-
-function getRealName (name) {
-	var type = getPresentType (name);
-	var key = getPresentKey (name);
-	name = name.replace('|' + type, '');
-	name = name.replace('.' + key, '');
-	return name;
-}
-
-function getPresentType (name) {
-	return name.split('|')[1] || 'plain';
-}
-
-function getPresentKey (name) {
-	return name.split('.')[1];
-}
-
-function deleteFiles (record, changedFields, callback) {
+Schemas.prototype.deleteFiles = function (record, changedFields, callback) {
 	var self = this;
 	var tasks = [];
 	
@@ -290,9 +302,9 @@ function deleteFiles (record, changedFields, callback) {
 	} // end of deleteOne
 	
 	async.each(tasks, deleteOne, callback);	
-}
+};
 
-function convert (data, showFields) {
+Schemas.prototype.convert = function (data, showFields) {
 	this.forEachField(function (name, field) {
 		switch (field.type) {
 			case 'boolean':
@@ -302,41 +314,8 @@ function convert (data, showFields) {
 	
 	}, showFields);
 	return data;
-}
+};
 
-function getReferenceTable (field) {
-	if (field.ref) {
-		return field.ref;
-	} else {
-		return inflection.pluralize(field.name.substring(1))
-	}
-}
-
-function getReferenceNames (showFields) {
-	var list = [];
-	
-	this.forEachField(function (name, field) {
-		if (field.type == 'ref') {
-			list.push(getReferenceTable(field));
-		}
-	}, showFields);
-	return list;
-}
-
-function getReferences (showFields) {
-	var map = {};
-	
-	this.forEachField(function (name, field) {
-		if (field.type == 'ref') {
-			map[name] = utils.merge({
-				table: getReferenceTable(field)
-			}, field.prepare || {});
-		}
-	}, showFields);
-	
-	return map;
-}
-
-function addValues (name, values) {
+Schemas.prototype.addValues = function (name, values) {
 	this.fields[name].values = values;
 }

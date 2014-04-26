@@ -1,21 +1,22 @@
 exports.render = render;
 
+var Present = require('../libs/present');
 var Grids = require('./grids');
 var Html = require('htmler');
 var a = Html.a;
 var div = Html.div;
 
 function render (records, config) {
-  var items = [];
-  // console.log(records);
-  // console.log(config);
+  var images = '';
+  
   records.forEach(function (record ) {
-    var name = config.schemas.getRealName(config.viewLinkField);
-    var value = record[name];
-    var media = config.schemas.presentValue(config.viewLinkField, value);
-    var link = a({href: config.links.view(record._id)}).html(media);
-    
-    items.push(div('media-box').html(link));
+    var present = Present.create(config, record);
+    var link = present.show(config.viewLinkField);
+    images += div('media-box pull-left').html(link);
   });
-  return Grids.render(items, 4);
+  
+  return div('media-panel').html(
+    images,
+    div('clearfix').html()
+  );
 }

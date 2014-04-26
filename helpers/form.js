@@ -61,7 +61,7 @@ function render (tableName, config) {
 	  id: 'jdb-submit',
 		type: 'submit',
 		class: 'btn btn-primary',
-		value:'保存' 
+		value: '保存' 
 	}));
 	
 	scriptHtml = Html.script().html('$(function () { jd.onlySubmitOnce("jdb-form", "jdb-submit"); });');

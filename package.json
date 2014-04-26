@@ -1,11 +1,11 @@
 {
   "name": "jsoncan-dashboard",
   "author": "Bibig <bibig@me.com> (https://twitter.com/bibig)",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "an admin module for express apps backed by jsoncan",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha -w"
   },
   "dependencies": {
     "rander": "*",
@@ -19,6 +19,7 @@
     "express": "*",
     "connect-multiparty": "~1.0.3",
     "jsoncan": "*",
+    "supertest": "*",
     "mocha": "*",
     "assert": "*",
     "should": "*",
