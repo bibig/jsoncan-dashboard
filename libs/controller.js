@@ -203,8 +203,9 @@ Controller.prototype.listAction = function () {
 		var currentPage = parseInt( req.params.page || 1 , 10);
 		var locals = utils.clone(config.locals);
 		var tasks = {};
+		// will use for querying records and querying count
 		var filters = self.schemas.safeFilters(req.query || {});
-		filter = utils.merge(filters, config.filters);
+    utils.merge(filters, config.filters);
 		
 		if (config.query) {
 		  tasks.query = function (callback) {
@@ -248,7 +249,7 @@ Controller.prototype.listAction = function () {
 		    table = info[0];
 		    textField = info[1];
 		    fields = ['_id', textField];
-		    query = self.dashboards.can.open(table).query(config.query.filter || {}).select(fields).limit(config.query.limit || 50);
+		    query = self.dashboards.can.open(table).query(config.query.filters || {}).select(fields).limit(config.query.limit || 50);
 		    
 		    if (config.query.order) {
 		      query.order(config.query.order[0], config.query.order[1] || false);
@@ -270,6 +271,7 @@ Controller.prototype.listAction = function () {
 		tasks.list = function (callback) {
 		  var selectFields = Present.getFieldNames(config.showFields);
       var referenceNames = self.schemas.getReferenceNames(selectFields);
+    	
       if (selectFields.indexOf('_id') == -1) {
         selectFields.unshift('_id');
       }
