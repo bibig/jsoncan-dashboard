@@ -1,5 +1,6 @@
 var jd = {};
 
+// for delete action
 jd.setCsrf = function (token) {
   $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
     jqXHR.setRequestHeader('X-CSRF-Token', token);
@@ -43,4 +44,28 @@ jd.onlySubmitOnce = function (formId, btnId) {
 
   // Keep chainability
   return this;
+};
+
+jd.richText = function (names) {
+  if (! names ) { return; }
+  
+  tinymce.init({
+    selector: names,
+    language : 'zh_CN',
+    language_url : '/javascripts/tinymce/langs/zh_CN.js',
+    content_css : "/stylesheets/tinymce_content.css",
+    menu : {
+        file   : {},
+        edit   : {title : 'Edit'  , items : 'undo redo | cut copy paste pastetext | selectall'},
+        insert : {title : 'Insert', items : 'link media | template hr'},
+        format : {title : 'Format', items : 'bold italic underline strikethrough superscript subscript | formats | removeformat'},
+        table  : {title : 'Table' , items : 'inserttable tableprops deletetable | cell row column'}
+    },
+    plugins: [
+        "advlist autolink lists link image charmap print preview anchor",
+        "searchreplace visualblocks code fullscreen",
+        "insertdatetime media table contextmenu paste"
+    ],
+    toolbar: "undo redo | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image"
+  });
 };

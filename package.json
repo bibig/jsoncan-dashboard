@@ -13,17 +13,25 @@
     "gm": "*",
     "async": "*",
     "inflection": "*",
-    "debug": "*"
+    "debug": "*",
+    "sanitizer": "*"
   },
   "devDependencies": {
-    "express": "*",
-    "connect-multiparty": "~1.0.3",
-    "jsoncan": "*",
     "supertest": "*",
     "mocha": "*",
     "assert": "*",
     "should": "*",
-    "faker": "*"
+    "express": "~4.0.0",
+    "static-favicon": "~1.0.0",
+    "morgan": "~1.0.0",
+    "cookie-parser": "~1.0.1",
+    "body-parser": "~1.0.0",
+    "connect-multiparty": "~1.0.3",
+    "cookie-session": "*",
+    "csurf": "*",
+    "jsoncan": "*",
+    "swig": "*",
+    "swig-extras": "*"
   },
   "repository": {
     "type": "git",

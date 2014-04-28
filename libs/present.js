@@ -1,7 +1,12 @@
+/**
+ * present value for a record
+ */
+
 exports.create = create;
 exports.getFieldNames = getFieldNames;
 exports.getFieldName = getFieldName;
-
+exports.setCsrfAjax = setCsrfAjax;
+exports.addLink = addLink;
 
 var Html = require('htmler');
 var Routes = require('./routes');
@@ -11,9 +16,18 @@ function create (config, record) {
 }
 
 function Present (config, record) {
+  
   this.routes = config.routes;
   this.schemas = config.schemas;
   this.showFields = config.showFields;
+  
+  this.hasEditAction = config.hasEditAction;
+  this.hasAddAction = config.hasAddAction;
+  this.hasDeleteAction = config.hasDeleteAction;
+  this.hasViewAction = config.hasViewAction;
+  
+  this.token = config.token;
+  
   this.record = record || {};
   this.referenceRoutes = {};
 }
@@ -99,19 +113,14 @@ Present.prototype.thumb = function (name) {
   return Html.img({src: src});
 };
 
-Present.prototype.link = function (name, value) {
+Present.prototype.link = function (name, text) {
   var ref;
   
   if (this.schemas.isReference(name)) {
-    if (!this.record[name]) { return null; }
-    ref = this.schemas.getReferenceTable(name);
-    if ( ! this.referenceRoutes[ref] ) {
-      this.referenceRoutes[ref] = Routes.create(this.routes.mount, ref);
-    }
-    // console.log(this.record);
-    return linkElement(this.referenceRoutes[ref].viewRoute(this.record[name]._id), value, true);
+    // if (!this.record[name]) { return null; }
+    return this.refViewLink(name, text);
   } else {
-    return linkElement(this.routes.viewRoute(this.record._id), value);
+    return this.viewLink(text);
   }
 };
 
@@ -120,19 +129,106 @@ Present.prototype.strong = function (name) {
   return Html.strong().html(value);
 };
 
-function linkElement (href, text, newWindow) {
+Present.prototype.editLink = function (isButton) {
+  var prop, text;
+  
+  if ( ! this.hasEditAction ) { return null; }
+  
+  text = '编辑';
+  prop = {
+    href: this.routes.editRoute(this.record._id)
+  };
+  
+  if (isButton) {
+    prop['class'] = 'btn btn-warning';
+    text = Html.span('glyphicon glyphicon-wrench').html() + ' ' + text;
+  }
+  
+  return Html.a(prop).html(text);
+};
+
+Present.prototype.deleteLink = function (isButton) {
+  var prop, text;
+  
+  if ( ! this.hasDeleteAction ) { return null; }
+  
+  text = '删除';
+  prop = {
+    href: '#',
+    onclick: 'jd.del(\'' + this.routes.deleteRoute(this.record._id) + '\');'
+  };
+  
+  if (isButton) {
+    prop['class'] = 'btn btn-danger';
+    text = Html.span('glyphicon glyphicon-trash').html() + ' ' + text;
+  }
+  
+  return Html.a(prop).html(text);
+};
+
+Present.prototype.addLink = function (isButton, extraClass) {
+  var q = {}, self = this;
+  
+  if ( ! this.hasAddAction ) { return null; }
+  
+  this.schemas.forEachRefField(function (name) {
+    if (self.record[name] !== undefined && self.record[name] !== null && self.record[name] !== '') {
+      q[name] = self.record[name]._id;
+    }
+  });
+  
+  return addLink(this.routes.addRoute(q), isButton, extraClass);
+};
+
+
+function addLink (url, isButton, extraClass) {
+  var text = '新增';
+  var prop = {
+    href: url
+  };
+  
+  if (isButton) {
+    prop['class'] = 'btn btn-success' ;
+    if (extraClass)  { prop['class'] += ' ' + extraClass; }
+    text = Html.span('glyphicon glyphicon-plus').html() + ' ' + text;
+  }
+  
+  return Html.a(prop).html(text);
+}
+
+Present.prototype.viewLink = function (text) {
+  if (this.hasViewAction) { return null; }
+  return Html.a({href: this.routes.viewRoute(this.record._id)}).html(text || '查看');
+};
+
+Present.prototype.refViewLink = function (name, text) {
+  var ref = this.schemas.getReferenceTable(name);
   var prop;
   
-  // console.log(arguments);
+  if ( ! this.referenceRoutes[ref] ) {
+    this.referenceRoutes[ref] = Routes.create(this.routes.mount, ref);
+  }
+  
   if (text === undefined || text === null || text === '') {
     return '';
   }
   
-  prop = { href: href };
+  prop = {
+    href: this.referenceRoutes[ref].viewRoute(this.record[name]._id),
+    target: '_blank'
+  };
   
-  if (newWindow && text.indexOf('<img') == -1) {
+  if (text.indexOf('<img') == -1) {
     prop.target = '_blank';
-    text = Html.span('glyphicon glyphicon-new-window').html() + ' ' + text;
   }
-  return Html.a(prop).html(text);
-}
+  
+  return Html.a(prop).html(
+    Html.span('glyphicon glyphicon-new-window').html(),
+    ' ',
+    text
+  );
+};
+
+function setCsrfAjax (config) {
+  return config.token ? Html.script().html('$(function () { jd.setCsrf("' + config.token + '"); });') : '';
+};

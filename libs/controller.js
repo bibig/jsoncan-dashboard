@@ -50,82 +50,162 @@ function Controller (dashboards, name, actions) {
 	this.schemas = Schemas.create(this.Table.getFields());
 	this.routes = Routes.create(this.mount, name);
 	this.views = new Views(this);
-		
-	this.hasListAction = true;
-	this.hasViewAction = true;
-	this.hasAddAction = true;
-	this.hasEditAction = true;
-	this.hasDeleteAction = true;
+
+  this.middlewaresData = {};
+  
+	// set all actions config
+	this.setActionConfig('list');	
+	this.setActionConfig('view');	
+	this.setActionConfig('edit');	
+	this.setActionConfig('add');
+	this.setActionConfig('delete');
+	
+	this.hasListAction = this.actions['list'] ? true : false;
+	this.hasViewAction = this.actions['view'] ? true : false;
+	this.hasAddAction = this.actions['add'] ? true : false;
+	this.hasEditAction = this.actions['edit'] ? true : false;
+	this.hasDeleteAction = this.actions['delete'] ? true : false;
+	
+	this.defaultAction = this.settings.defaultAction || 'list'; 
 	
 	if (this.settings.max) {
 	  this.setRecordCount();
 	}
 }
 
+Controller.prototype.setActionConfig = function (name, defaults) {
+  var config = this.actions[name];
+  
+  if (config === false) {
+    return;
+  }
+  
+  if ( config === undefined) {
+    config = this.actions[name] = {};
+  }
+  
+	defaults = defaults || {
+	  routes: this.routes, // should remove
+		schemas: this.schemas, // should remove
+		showFields: this.schemas.inputFields(),
+		locals: {}
+	};
+	
+	switch (name) {
+		case 'view':
+			defaults.isFormat = true;
+			break;
+		case 'edit':
+			break;
+		case 'add':
+			break;
+		case 'list':
+			defaults.showPage = true;
+			defaults.pageSize = 50;
+			defaults.filters = {};
+			defaults.isFormat = true;
+			break;
+		case 'delete':
+			break;
+	}
+	
+	
+	utils.merge(config, defaults);
+	
+	this.middlewaresData[name] = {}
+};
+
+/**
+ * completed list action要经历一下步骤
+ * step 1: render dropdown for request query
+ * step 2: render main table for records
+ * step 3: render pagination
+ * step 4: render view for browser
+ * @params:
+      config.locals
+      config.query
+      config.filters
+      dashboard
+ */
+
+Controller.prototype.enableListAction = function () {
+  var middlewares = [];
+  var queryDropdownStep, mainTableStep, paginationStep, finalStep;
+  
+  if ( ! this.hasListAction ) { return; }
+  
+  queryDropdownStep = this.listActionRenderDropdownStep();
+  mainTableStep = this.listActionRenderMainTableStep();
+  paginationStep = this.listActionRenderPaginationStep();
+  finalStep = this.listActionFinalStep();
+  
+  if (queryDropdownStep) {  middlewares.push(queryDropdownStep); }
+  if (mainTableStep) {  middlewares.push(mainTableStep); }
+  if (paginationStep) {  middlewares.push(paginationStep); }
+  
+  
+  if (this.defaultAction == 'list') {
+    this.dashboards.app.get(this.routes.rootRoute(), middlewares, finalStep);
+  }
+  
+  this.dashboards.app.get(this.routes.listRoute(':page'), middlewares, finalStep);
+};
+
+Controller.prototype.enableAddAction = function () {
+  var middlewares = [];
+  
+  if ( ! this.hasAddAction ) { return; }
+		
+  if (this.settings.max) { 
+    middlewares.push(this.checkMaxAction()); 
+  }
+  
+  if (this.schemas.hasUploadField()) {
+    middlewares.push(this.uploadAction());
+  }
+      
+  middlewares.push(this.saveAction());
+  this.dashboards.app.all(this.routes.addRoute(), middlewares, this.addAction());
+};
+
+Controller.prototype.enableEditAction = function () {
+  var middlewares = [];
+  
+  if ( ! this.hasEditAction ) { return; }
+		
+  if (this.schemas.hasUploadField()) {
+    middlewares.push(this.uploadAction());
+  }
+  
+  middlewares.push(this.saveAction());
+  
+  this.dashboards.app.all(this.routes.editRoute(':id'), middlewares, this.editAction());
+};
+
+Controller.prototype.enableDeleteAction = function () {
+  if ( ! this.hasDeleteAction ) { return; }
+	this.dashboards.app.delete(this.routes.deleteRoute(':id'), this.deleteAction());
+};
+
+Controller.prototype.enableViewAction = function () {
+  var view;
+  
+  if ( ! this.hasViewAction ) { return; }
+  
+  view = this.viewAction();
+  if (this.defaultAction == 'view') { // for only one record table
+    this.dashboards.app.get(this.routes.rootRoute(), view);
+  }
+  
+  this.dashboards.app.get(this.routes.viewRoute(':id'), view);
+};
+
 Controller.prototype.enable = function () {
-  var defaultAction = this.settings.defaultAction || 'list'; 
-  var middlewares;
-  var list = this.listAction();
-	var add = this.addAction();
-	var edit = this.editAction();
-	var view = this.viewAction();
-	var del = this.deleteAction();
-	
-	if ( ! list ) { this.hasListAction = false; }
-	if ( ! add ) { this.hasAddAction = false; }
-	if ( ! view ) { this.hasViewAction = false; }
-	if ( ! edit ) { this.hasEditAction = false; }
-	if ( ! del ) { this.hasDeleteAction = false; }
-	
-	
-	switch (defaultAction) {
-	  case 'list':
-	    if (this.hasListAction) { this.dashboards.app.get(this.routes.rootRoute(), list); }
-	    break;
-	  case 'view':
-	    if (this.hasViewAction) {
-	      this.dashboards.app.get(this.routes.rootRoute(), view);
-	    }
-	    break;
-	}
-	
-	if (this.hasListAction) {
-		this.dashboards.app.get(this.routes.listRoute(':page'), list);
-	}
-	
-	if (this.hasAddAction) {
-		middlewares = [];
-		
-		if (this.settings.max) { 
-		  middlewares.push(this.checkMaxAction()); 
-		}
-		
-		if (this.schemas.hasUploadField()) {
-			middlewares.push(this.uploadAction());
-		}
-				
-		middlewares.push(this.saveAction());
-		this.dashboards.app.all(this.routes.addRoute(), middlewares, add);
-	}
-	
-	if (this.hasEditAction) {
-		middlewares = [];
-		
-		if (this.schemas.hasUploadField()) {
-			middlewares.push(this.uploadAction());
-		}		
-		middlewares.push(this.saveAction());
-		
-		this.dashboards.app.all(this.routes.editRoute(':id'), middlewares, edit);
-	}
-	
-	if (this.hasViewAction) {
-		this.dashboards.app.get(this.routes.viewRoute(':id'), view);
-	}
-	
-	if (this.hasDeleteAction) {
-		this.dashboards.app.delete(this.routes.deleteRoute(':id'), del);
-	}
+  this.enableListAction();
+  this.enableViewAction();
+  this.enableAddAction();
+  this.enableEditAction();
+  this.enableDeleteAction();
 };
 
 Controller.prototype.setRecordCount = function () {
@@ -152,192 +232,165 @@ Controller.prototype.isAvailableForAdd = function () {
   return true;
 };
 
-Controller.prototype.initActionConfig = function (name, defaults) {
-	if (this.actions[name] === false) {
-		return false;
-	}
-	
-	if (!this.actions[name]) {
-		this.actions[name] = {};
-	}
-	
-	defaults = defaults || {
-	  routes: this.routes,
-		schemas: this.schemas,
-		showFields: this.schemas.inputFields(),
-		locals: {}
-	};
-	
-	switch (name) {
-		case 'view':
-			defaults.isFormat = true;
-			break;
-		case 'edit':
-			break;
-		case 'add':
-			break;
-		case 'list':
-			defaults.showPage = true;
-			defaults.pageSize = 50;
-			defaults.filters = {};
-			defaults.isFormat = true;
-			break;
-		case 'delete':
-			break;
-	}
-	
-	utils.merge(this.actions[name], defaults);
-	
-	// return utils.clone(this.config[name]);
-	return this.actions[name];
-};
 
-Controller.prototype.listAction = function () {
-	var config = this.initActionConfig('list');
+
+Controller.prototype.listActionRenderDropdownStep = function () {
+  var config = this.actions['list'];
 	var self = this;
 	
-	if (config === false ) { return false; }
+	if ( ! config.query ) { return false; }
 	
 	return function (req, res, next) {
-	  // console.log(req.query);
+	  var info = config.query.name.split('.');
+    var table, textField, fields, query, schemaDefinedValues;
+    var fieldName = info[1] ? self.schemas.getReferenceField(info[0]) : info[0];
+    var queryConfig = {
+      title: config.query.title,
+      currentValue: req.query[fieldName],
+      qname: config.query.ref || fieldName,
+      routes: self.routes
+    };
+		var schemaValuesToRecords = function (values, name) { // prepare records for render filterDropdown
+      var records = [];
+      
+      if (Array.isArray(values)) {
+        for (var i = 0; i < values.length; i++) {
+          var item = { _id: i };
+          item[name] = values[i];
+          records.push(item);
+        }
+      } else {
+        Object.keys(values).forEach(function (key) {
+          var item = { _id: key };
+          item[name] = values[key];
+          records.push(item);
+        });
+      }
+
+      return records;
+    }; // end of schemaValuesToRecords
+        
+    if (info.length == 1) { // map or array field
+      schemaDefinedValues = self.schemas.getField(info[0], 'values');
+      queryConfig['textField'] = info[0];
+      self.middlewaresData.list.queryDropdown = helpers.list.renderFilterDropdown(schemaValuesToRecords(schemaDefinedValues, info[0]), queryConfig);
+      next();
+    } else {
+      table = info[0];
+      textField = info[1];
+      fields = ['_id', textField];
+      query = self.dashboards.can.open(table).query(config.query.filters || {}).select(fields).limit(config.query.limit || 50);
+    
+      if (config.query.order) {
+        query.order(config.query.order[0], config.query.order[1] || false);
+      }
+    
+      query.exec(function (e, records) {
+        // var queryConfig;
+        if (e) { next(e); } else if (records.length == 0) { next(); } else  {
+          queryConfig['textField'] = textField;
+          self.middlewaresData.list.queryDropdown = helpers.list.renderFilterDropdown(records, queryConfig);
+          next();
+        }
+      });
+    }
+  };
+};
+
+Controller.prototype.listActionRenderMainTableStep = function () {
+  var config = this.actions['list'];
+	var self = this;
+	
+	return function (req, res, next) {
 		var currentPage = parseInt( req.params.page || 1 , 10);
-		var locals = utils.clone(config.locals);
-		var tasks = {};
 		// will use for querying records and querying count
 		var filters = self.schemas.safeFilters(req.query || {});
-    utils.merge(filters, config.filters);
-		
-		if (config.query) {
-		  tasks.query = function (callback) {
-		    var info = config.query.name.split('.');
-		    var table, textField, fields, query, schemaDefinedValues;
-		    var fieldName = info[1] ? self.schemas.getReferenceField(info[0]) : info[0];
-		    var queryConfig = {
-		      title: config.query.title,
-		      currentValue: req.query[fieldName],
-		      qname: config.query.ref || fieldName,
-		      routes: self.routes
-		    };
-		    var schemaValuesToRecords = function (values, name) { // prepare records for render filterDropdown
-          var records = [];
-          
-          if (Array.isArray(values)) {
-            for (var i = 0; i < values.length; i++) {
-              var item = { _id: i };
-              item[name] = values[i];
-              records.push(item);
-            }
-          } else {
-            Object.keys(values).forEach(function (key) {
-              var item = { _id: key };
-              item[name] = values[key];
-              records.push(item);
-            });
-          }
+    var selectFields = Present.getFieldNames(config.showFields);
+    var referenceNames = self.schemas.getReferenceNames(selectFields);
+    var skip, query;
   
-          return records;
-        }; // end of schemaValuesToRecords
-		    
-		    
-		    if (info.length == 1) { // map or array field
-		      schemaDefinedValues = self.schemas.getField(info[0], 'values');
-		      queryConfig['textField'] = info[0];
-		      callback(null, helpers.list.renderFilterDropdown(schemaValuesToRecords(schemaDefinedValues, info[0]), queryConfig));
-		      return;
-		    }
-		    
-		    table = info[0];
-		    textField = info[1];
-		    fields = ['_id', textField];
-		    query = self.dashboards.can.open(table).query(config.query.filters || {}).select(fields).limit(config.query.limit || 50);
-		    
-		    if (config.query.order) {
-		      query.order(config.query.order[0], config.query.order[1] || false);
-		    }
-		    
-		    query.exec(function (e, records) {
-		      // var queryConfig;
-		      if (e) { callback(e); } else if (records.length == 0) { 
-		        callback(null, '');
-		      } else  {
-		        queryConfig['textField'] = textField;
-            callback(null, helpers.list.renderFilterDropdown(records, queryConfig));
-          }
-		    });
-		    
-		  };
-		}
-		
-		tasks.list = function (callback) {
-		  var selectFields = Present.getFieldNames(config.showFields);
-      var referenceNames = self.schemas.getReferenceNames(selectFields);
-    	
-      if (selectFields.indexOf('_id') == -1) {
-        selectFields.unshift('_id');
+    if (selectFields.indexOf('_id') == -1) {
+      selectFields.unshift('_id');
+    }
+    
+    utils.merge(filters, config.filters);
+    
+    skip = (currentPage - 1) * config.pageSize;
+    query = self.Table.query(filters)
+              .select(selectFields)
+              .skip(skip)
+              .limit(config.pageSize);
+
+    referenceNames.forEach(function (name) {
+      query.ref(name);
+    });
+  
+    if (Array.isArray(config.order)) {
+      query.order(config.order[0], config.order[1] || false)
+    }
+  
+    if (config.isFormat) {
+      query.format();
+    }
+  
+    query.exec(function (e, records) {
+      if (e) { next(e); } else {
+        config.hasEditAction = !config.readonly ? self.hasEditAction : false;
+        config.hasDeleteAction = !config.readonly ? self.hasDeleteAction : false;
+        config.token = self.csrfToken(req);
+        self.middlewaresData.list.mainTable = helpers.list.renderTable(records, config);
+        next(e);
       }
-			var skip = (currentPage - 1) * config.pageSize;
-			var	query = self.Table.query(filters)
-								.select(selectFields)
-								.skip(skip)
-								.limit(config.pageSize);
+    });
+  };
+};
 
-			referenceNames.forEach(function (name) {
-				query.ref(name);
-			});
-			
-			if (Array.isArray(config.order)) {
-				query.order(config.order[0], config.order[1] || false)
-			}
-			
-			if (config.isFormat) {
-				query.format();
-			}
-			
-			query.exec(function (e, records) {
-				if (e) { callback(e); } else {
-					config.hasEditAction = !config.readonly ? self.hasEditAction : false;
-					config.hasDeleteAction = !config.readonly ? self.hasDeleteAction : false;
-					config.token = self.csrfToken(req);
-					callback(null, helpers.list.renderTable(records, config));
-				}
-			});
-		};
+Controller.prototype.listActionRenderPaginationStep = function () {
+  var config = this.actions['list'];
+	var self = this;
+	
+	if ( ! config.showPage) { return false; }
+	
+	return function (req, res, next) {
+	  var currentPage = parseInt( req.params.page || 1 , 10);
+		// will use for querying records and querying count
+		var filters = self.schemas.safeFilters(req.query || {});
+		utils.merge(filters, config.filters);
 		
-		if (config.showPage) {
-			tasks.pages = function (callback) {
-				self.Table.query(filters).count(function (e, count) {
-					var pageCount;
-					if (e) { callback(e);} else {
-						pageCount = Math.ceil(count / config.pageSize);
-						callback(null, helpers.pages.render(
-							currentPage,
-							pageCount,
-							function (page) { return self.routes.listRoute(page, req.query)}
-						));
-					}
-				});
-			};
-		}
+		self.Table.query(filters).count(function (e, count) {
+      var pageCount;
+      if (e) { next(e);} else {
+        pageCount = Math.ceil(count / config.pageSize);
+        self.middlewaresData.list.pagination = helpers.pages.render(
+          currentPage,
+          pageCount,
+          function (page) { return self.routes.listRoute(page, req.query)}
+        );
+        next();
+      }
+    });
+  };
+};
 
-		async.series(tasks, function (e, results) {
-		  var addLinkUrl, addLink;
-			if (e) { next(e);} else {
-			  addLinkUrl = (self.hasAddAction && self.isAvailableForAdd()) ? self.routes.addRoute(req.query) : false;
-			  addLink = helpers.list.renderAddLink(addLinkUrl);
-				locals.list = results.list;
-				locals.pages = results.pages || '';
-				locals.title = helpers.list.renderTitle(self.views.viewTitle('list'), addLink, results.query);
-				// locals.token = self.csrfToken(req);
-				self.views.render(res, 'list', locals);
-			}
-		});
-		
-	}; // end return;
-}; // end of function
+Controller.prototype.listActionFinalStep = function () {
+  var config = this.actions['list'];
+	var self = this;
+	
+	return function (req, res, next) {
+	  var locals = utils.clone(config.locals);
+	  var addLinkUrl = (self.hasAddAction && self.isAvailableForAdd()) ? self.routes.addRoute(req.query) : false;
+	  var addLink = helpers.list.renderAddLink(addLinkUrl);
+	  
+    locals.list = self.middlewaresData.list.mainTable || '';
+    locals.pages = self.middlewaresData.list.pagination || '';
+    locals.title = helpers.list.renderTitle(self.views.viewTitle('list'), addLink, self.middlewaresData.list.queryDropdown || '');
+    self.views.render(res, 'list', locals);
+	};
+};
 
 Controller.prototype.viewAction = function () {
 	var self = this;
-	var config = this.initActionConfig('view');
+	var config = this.actions['view'];
 
 	if (config === false ) { return false; }
 	
@@ -487,7 +540,7 @@ Controller.prototype.setReferencesValues = function (showFields, callback) {
 
 Controller.prototype.addAction = function () {
 	var self = this;
-	var config = this.initActionConfig('add');
+	var config = this.actions['add'];
 
 	if (config === false ) { return false; }
 	
@@ -552,6 +605,7 @@ Controller.prototype.saveAction = function () {
 			}
 			
 			data = self.schemas.convert(data, req.body._fields.split(','));
+			data = self.schemas.sanitize(data);
 			model = self.Table.create(data);
 			if (Object.keys(req.errors).length == 0 && model.validate()) {
 				model.save(function (e, record) {
@@ -577,7 +631,7 @@ Controller.prototype.saveAction = function () {
 
 Controller.prototype.editAction = function (Table, config) {
 	var self = this;
-	var config = this.initActionConfig('edit');
+	var config = this.actions['edit'];
 	
 	if (config === false ) { return false; }
 	
@@ -627,7 +681,7 @@ Controller.prototype.editAction = function (Table, config) {
 // should use delete method
 Controller.prototype.deleteAction = function () {
 	var self = this;
-	var config = this.initActionConfig('delete');
+	var config = this.actions['delete'];
 	
 	if (config === false ) { return false; }
 	

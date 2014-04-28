@@ -13,8 +13,17 @@ Views.prototype.viewFile = function (name) {
 	if (view) {
 		return view;	
 	} else {
-		return path.join(this.viewPath, this.controller.actions[name].viewName || name);
+		return path.join(this.viewPath, this.controller.actions[name].viewName || this.getDefaultViewName(name));
 	}
+};
+
+Views.prototype.getDefaultViewName = function (name) {
+  switch (name) {
+    case 'add':
+      return 'edit.html';
+    default:
+      return name + '.html';
+  }
 };
 
 Views.prototype.render = function (res, name, locals) {

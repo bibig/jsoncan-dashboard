@@ -1,5 +1,6 @@
 exports.renderDashboards = renderDashboards;
 exports.render = render;
+exports.renderCols = renderCols;
 
 var Html = require('htmler');
 var div = Html.div;
@@ -74,6 +75,18 @@ function render (items, colNum) {
   
   for (var i = 0; i < colNum; i++) {
     body += div('col-md-' + (12 / colNum)).html(cols[i]);
+  }
+  
+  return div('row').html(body); 
+}
+
+function renderCols (items) {
+  var body = '';
+  var cols = items.length;
+  var eachCol = Math.floor(12 / cols);
+  
+  for (var i = 0; i < cols; i++) {
+    body += div('col-md-' + eachCol).html(items[i]);
   }
   
   return div('row').html(body); 

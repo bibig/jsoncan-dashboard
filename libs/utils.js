@@ -6,6 +6,7 @@ exports.cloneArray = cloneArray;
 exports.hasKeys = hasKeys;
 exports.fileExt = fileExt;
 exports.humanFileSize = humanFileSize;
+exports.trim = trim;
 
 function merge (targetObj, defaultObj) {
 	if (! targetObj) targetObj = {};
@@ -91,4 +92,12 @@ function humanFileSize (size) {
 	} else {
 		return parseInt(size * 10 / 1048576 ) / 10  + 'm';
 	}
-};
+}
+
+function trim (v) {
+  if ( typeof v == 'string') {
+      return v.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+  } else {
+      return v;
+  }
+}

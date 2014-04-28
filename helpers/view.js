@@ -2,9 +2,6 @@ exports.render = render;
 
 var Present = require('../libs/present');
 var Html = require('htmler');
-var table = Html.table;
-// var tbody = Html.tbody;
-// var thead = Html.thead;
 var tr = Html.tr;
 var td = Html.td;
 var th = Html.th;
@@ -18,7 +15,7 @@ function render (record, config) {
 	var scriptHtml = '';
 	var schemas = config.schemas;
 	var links = [];
-	// var editLink, deleteLink, addLink;
+	var editLink, deleteLink, addLink;
 	var hasManyPartHtml;
 	var scripts = [];
 	var present = Present.create(config, record);
@@ -51,26 +48,13 @@ function render (record, config) {
 	  ));
 	}
 	
-	if (config.hasEditAction) {
-	  links.push(a({href: config.routes.editRoute(record._id), class: 'btn btn-warning'}).html(
-	    Html.span('glyphicon glyphicon-wrench').html(),
-	    ' 编辑'
-	  ));
-	}
+	editLink = present.editLink(true);
+	deleteLink = present.deleteLink(true);
+	addLink = present.addLink(true);
 	
-	if (config.hasDeleteAction) {
-	  links.push(a({href: '#', 'onclick': 'jd.del(\'' + config.routes.deleteRoute(record._id) + '\');', class: 'btn btn-danger'}).html(
-	    Html.span('glyphicon glyphicon-trash').html(),
-	    ' 删除'
-	  ));
-	}
-	
-	if (config.hasAddAction) {
-	  links.push(a({href: config.routes.addRoute(), class: 'btn btn-success'}).html(
-	    Html.span('glyphicon glyphicon-plus').html(),
-	    ' 新增'
-	  ));
-	}
+	if (editLink) { links.push(editLink); }
+	if (deleteLink) { links.push(deleteLink); }
+	if (addLink) { links.push(addLink); }
 	
 	rows.push(
 		tr().html(
@@ -78,10 +62,6 @@ function render (record, config) {
 			td().html(links.join('&nbsp;'))
 		)
 	);	
-	
-	if (config.token) {
-	  scriptHtml = Html.script().html('$(function () { jd.setCsrf("' + config.token + '"); });');
-	}
 
-	return table('table table-bordered table-record').html(rows) + scriptHtml;
+	return Html.table('table table-bordered table-record').html(rows) + Present.setCsrfAjax(config);
 }

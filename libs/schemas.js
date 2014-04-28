@@ -64,6 +64,12 @@ Schemas.prototype.forEachField = function (callback, whiteList) {
 	});
 };
 
+Schemas.prototype.forEachRefField = function (callback) {
+  this.forEachField(callback, function (field) {
+    return field.type == 'ref';
+  });
+};
+
 Schemas.prototype.getFileRelatedData = function (record) {
   var data = {};
   this.forEachField(function (name, field) {
@@ -230,9 +236,7 @@ Schemas.prototype.isReference = function (name) {
 
 Schemas.prototype.presentValue = function (name, value) {
 	var presentType, presentKey, name, field;
-	// console.log(name, value);
 	if (value === null || value === undefined || value === '') {
-	  // console.log('%s = %s', name, value);
 		return '';
 	}
 	
@@ -259,7 +263,6 @@ Schemas.prototype.presentValue = function (name, value) {
 				}
 			}
 	}
-	// console.log('2~', value);
 	return value;
 };
 
@@ -315,6 +318,25 @@ Schemas.prototype.convert = function (data, showFields) {
 	}, showFields);
 	return data;
 };
+
+Schemas.prototype.sanitize = function (data) {
+  var sanitizer = require('sanitizer');
+  var safe = {};
+  
+  this.forEachField(function (name, field) {
+    if (data[name] === undefined) { return; }
+    
+    if (field.type == 'string') {
+      safe[name] = sanitizer.sanitize(data[name]);
+    } else {
+      safe[name] = data[name];
+    }
+	
+	});
+	
+	return safe;
+};
+
 
 Schemas.prototype.addValues = function (name, values) {
 	this.fields[name].values = values;

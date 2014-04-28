@@ -4,7 +4,6 @@ exports.renderTitle = renderTitle;
 exports.renderUl = renderUl;
 exports.renderAddLink = renderAddLink;
 
-// var Schemas = require('../libs/schemas');
 var Present = require('../libs/present');
 var Html = require('htmler');
 var div = Html.div;
@@ -48,29 +47,24 @@ function renderTable (records, config) {
       var trHtml = '';
       var links = [];
       var present = Present.create(config, record);
+      var viewLink, editLink, deleteLink;
     
       present.showAll().forEach(function (ele) {
         trHtml += td().html(ele);
       });
+      
+      viewLink = present.viewLink();
+      editLink = present.editLink();
+      deleteLink = present.deleteLink();
     
-      links.push(a({href: routes.viewRoute(record._id)}).html('查看'));
-    
-      if (config.hasEditAction) {
-        links.push(a({href: routes.editRoute(record._id)}).html('编辑'));
-      }
-    
-      if (config.hasDeleteAction) {
-        links.push(a({href: '#', 'onclick': 'jd.del(\'' + routes.deleteRoute(record._id) + '\');'}).html('删除'));
-      }
+      if (viewLink) {  links.push(viewLink); }
+      if (editLink) {  links.push(editLink); }
+      if (deleteLink) {  links.push(deleteLink); }
     
       trHtml += td().html(links.join('&nbsp;|&nbsp;'));
     
       tableBodyHtml += tr().html(trHtml);
     });
-   
-    if (config.token) {
-      scriptHtml = Html.script().html('$(function () { jd.setCsrf("' + config.token + '"); });');
-    }
     
   } else {
     colspan = config.showFields.length + 1;
@@ -82,7 +76,7 @@ function renderTable (records, config) {
 	return table('table table-striped').html(
 		thead().html(tableHeadHtml),
 		tbody().html(tableBodyHtml)
-	) + scriptHtml;
+	) + Present.setCsrfAjax(config);
 }
 
 function renderFilterDropdown (records, config) {
@@ -100,17 +94,18 @@ function renderFilterDropdown (records, config) {
   records.forEach(function (record) {
     var q = {};
     var text = record[config.textField];
+    var showText = text;
     
     if (text.length > 15) {
-      text = text.substring(0, 11) + '...';
+      showText = text.substring(0, 11) + '...';
     }
     
     if (record._id == config.currentValue) {
       klass = 'active';
-      items.push(li('active').html(a({href: '#'}).html(text)));
+      items.push(li('active').html(a({href: '#', title: text}).html(showText)));
     } else {
       q[config.qname] = record._id;
-      items.push(li().html(a({href: config.routes.listRoute(1, q)}).html(text)));
+      items.push(li().html(a({href: config.routes.listRoute(1, q), title: text}).html(showText)));
     }
   });
   
@@ -139,18 +134,15 @@ function renderUl (records, config) {
   return ul('list-unstyled').html(liHtmls);
 }
 
+// ready to move into present
 function renderAddLink (url, text) {
-  var cls = 'btn btn-large btn-success';
+  var cls = 'btn-large';
   if ( ! url ) {
     url = '#';
     cls += ' disabled';
   }
   
-  return a({class: cls, href: url}).html(
-    Html.span('glyphicon glyphicon-plus').html(),
-    ' ',
-    text || '新增'
-  );
+  return Present.addLink(url, true, cls);
 }
 
 function renderTitle (title, addLink, queryDropdown) {
