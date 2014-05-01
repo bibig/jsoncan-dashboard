@@ -234,38 +234,6 @@ Schemas.prototype.isReference = function (name) {
   return field.type === 'ref';
 };
 
-Schemas.prototype.presentValue = function (name, value) {
-	var presentType, presentKey, name, field;
-	if (value === null || value === undefined || value === '') {
-		return '';
-	}
-	
-	presentType = getPresentType(name);
-	presentKey = getPresentKey(name);
-	name = getRealName(name);
-	field = this.getField(name);
-	
-	switch (presentType) {
-		case 'image':
-			if (field.isImage) {
-				return this.valueToImage(name, value);
-			}
-			break;
-		case 'thumb':
-			if (field.isImage && field.hasThumb) {
-				return this.thumbImage(name, value)
-			}
-			break;
-		default:
-			if (typeof value === 'object') { // reference
-				if (presentKey) {
-					return value[presentKey];
-				}
-			}
-	}
-	return value;
-};
-
 Schemas.prototype.deleteFiles = function (record, changedFields, callback) {
 	var self = this;
 	var tasks = [];
