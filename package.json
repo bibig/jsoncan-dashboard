@@ -1,7 +1,7 @@
 {
   "name": "jsoncan-dashboard",
   "author": "Bibig <bibig@me.com> (https://twitter.com/bibig)",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "an admin module for express apps backed by jsoncan",
   "main": "index.js",
   "scripts": {
