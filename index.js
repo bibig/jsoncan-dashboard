@@ -10,7 +10,9 @@ function Dashboards (can, settings, tables) {
   this.can      = can;
   this.settings = yi.merge(settings || {}, {
     title: '后台管理',
-    mount: ''
+    mount: '',
+    stylesheets: {},
+    javascripts: {}
   });
 
   // set default main toolbars
@@ -21,6 +23,8 @@ function Dashboards (can, settings, tables) {
   }
 
   this.initApp();
+  this.initLocals();
+
   this.tables = tables || {};
   // if tables is not empty, add all related controller immediately
   this.addAll();
@@ -34,23 +38,24 @@ function Dashboards (can, settings, tables) {
  * @return {express app}
  */
 Dashboards.prototype.initApp = function () {
-  var express       = require('express');
-  var favicon       = require('static-favicon');
-  var logger        = require('morgan');
-  var cookieParser  = require('cookie-parser');
-  var bodyParser    = require('body-parser');
-  var session       = require('cookie-session');
-  var multipart     = require('connect-multiparty');
-  // var debug      = require('debug')('app');
-  var csrf          = require('csurf');
   
-  var swig          = require('swig');
-  // var swigExtras = require('swig-extras');
-  var app           = express();
-  var isProduction  = app.get('env') === 'production';
-  var currentDate   = new Date();
-
   if (this.app) return;
+
+  var express        = require('express');
+  var favicon        = require('static-favicon');
+  var logger         = require('morgan');
+  var cookieParser   = require('cookie-parser');
+  var bodyParser     = require('body-parser');
+  var session        = require('cookie-session');
+  var multipart      = require('connect-multiparty');
+  // var debug       = require('debug')('app');
+  var csrf           = require('csurf');
+  
+  var swig           = require('swig');
+  // var swigExtras  = require('swig-extras');
+  var app            = express();
+  var defaultFavicon = path.join(__dirname, 'public/images/favicon.ico');
+  var isProduction   = app.get('env') === 'production';
 
   // swigExtras.useFilter(swig, 'nl2br');
 
@@ -62,40 +67,13 @@ Dashboards.prototype.initApp = function () {
     app.set('view cache', false);
     swig.setDefaults({ cache: false });
   }
-
-  // set layout needed variables
-  app.locals.isProduction = isProduction;
-  app.locals.mount        = this.settings.mount;
-  app.locals.currentDate  = [currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate()];
-  // app.locals.mountUrl        = this.settings.mount + '/';
-  // app.locals.dashboardsTitle = this.settings.dashboardsTitle || this.settings.title;
-  // app.locals.mainSiteName    = this.settings.mainSiteName || '网站';
-  // app.locals.mainSiteUrl     = this.settings.mainSiteUrl || '/';
   
-  // prepare for nav links, render toolbars
-  if (yi.isNotEmpty(this.settings.mainToolbars)) {
-    app.locals.mainToolbars = Helpers.anchor.render(this.settings.mainToolbars); 
-  }
-
-  if (yi.isNotEmpty(this.settings.rightToolbars)) {
-    app.locals.rightToolbars = Helpers.anchor.render(this.settings.rightToolbars);
-  }
-
-  if (yi.isNotEmpty(this.settings.footbars)) {
-    app.locals.footbars = Helpers.anchor.render(this.settings.footbars);
-  }
-
-  // prepare for logo
-  if (yi.isNotEmpty(this.settings.logo)) {
-    app.locals.logo = Helpers.anchor.render(this.settings.logo);
-  }
-
   // view engine setup
   // app.set('views', path.join(__dirname, 'views'));
   // app.set('view engine', 'jade');
 
 
-  app.use(favicon(path.join(__dirname, 'public/images/favicon.ico')));
+  app.use(favicon(this.settings.favicon || defaultFavicon));
   // app.use(logger('dev'));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded());
@@ -117,6 +95,49 @@ Dashboards.prototype.initApp = function () {
   app.use(express.static(path.join(__dirname, 'public')));
 
   this.app = app;
+};
+
+Dashboards.prototype.initLocals = function () {
+
+  if ( ! this.app) { return; }
+
+  var currentDate = new Date();
+
+  // this.app.locals.isProduction = this.app.get('env') === 'production';
+  this.app.locals.mount        = this.settings.mount;
+  this.app.locals.currentDate  = [currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate()];
+
+  // prepare for logo
+  if (yi.isNotEmpty(this.settings.logo)) {
+    this.app.locals.logo = Helpers.anchor.render(this.settings.logo);
+  }
+
+  // prepare for nav links, render toolbars
+  if (yi.isNotEmpty(this.settings.mainToolbars)) {
+    this.app.locals.mainToolbars = Helpers.anchor.render(this.settings.mainToolbars); 
+  }
+
+  if (yi.isNotEmpty(this.settings.rightToolbars)) {
+    this.app.locals.rightToolbars = Helpers.anchor.render(this.settings.rightToolbars);
+  }
+
+  if (yi.isNotEmpty(this.settings.footbars)) {
+    this.app.locals.footbars = Helpers.anchor.render(this.settings.footbars);
+  }
+
+  this.app.locals.stylesheets           = this.settings.stylesheets;
+  this.app.locals.stylesheets.base      = this.settings.stylesheets.base || this.settings.mount + '/stylesheets/admin.css';
+  this.app.locals.stylesheets.bootstrap = this.settings.stylesheets.bootstrap || '//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css';
+  this.app.locals.stylesheets.fa        = this.settings.stylesheets.fa || '//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css';
+  
+  this.app.locals.javascripts           = this.settings.javascripts;
+  this.app.locals.javascripts.base      = this.settings.javascripts.base || this.settings.mount + '/javascripts/jsoncan-dashboard.js';
+  // this.app.locals.javascripts.jquery    = this.settings.javascripts.jquery || 'http://libs.baidu.com/jquery/1.10.2/jquery.min.js';
+  this.app.locals.javascripts.jquery    = this.settings.javascripts.jquery || 'http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.0.min.js';
+
+  this.app.locals.javascripts.bootstrap = this.settings.javascripts.bootstrap || '//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js';
+  this.app.locals.javascripts.tinymce   = this.settings.javascripts.tinymce || '//tinymce.cachefly.net/4.0/tinymce.min.js';
+
 };
 
 /**

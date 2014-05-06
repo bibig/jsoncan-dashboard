@@ -7,13 +7,9 @@
     <title>{% block title %}{{ pageTitle }}{% endblock %}</title>
     <link rel="icon" href="{{mount}}/images/favicon.ico" type="image/x-icon">
     <!-- Bootstrap -->
-    {% if isProduction %}
-    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
-    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
-    {% else %}
-    <link href="{{mount}}/stylesheets/bootstrap.min.css" rel="stylesheet">
-    <link href="{{mount}}/stylesheets/font-awesome.min.css" rel="stylesheet">
-    {% endif %}
+    <link href="{{ stylesheets.bootstrap }}" rel="stylesheet">
+    <link href="{{ stylesheets.fa }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ stylesheets.base }}">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -23,27 +19,15 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <!--<script src="//code.jquery.com/jquery-1.10.2.min.js"></script>-->
     <!--<script src="//code.jquery.com/jquery-latest.min.js"></script>-->
-    
-    {% block head %}
-      <link rel="stylesheet" href="{{mount}}/stylesheets/admin.css">
-      {% if isProduction %}
-      <script src="http://libs.baidu.com/jquery/1.10.2/jquery.min.js"></script>
-      {% else %}
-      <script src="{{mount}}/javascripts/jquery-1.11.0.min.js"></script>
-      {% endif %}
-    {% endblock %}
-    
+    <script src="{{ javascripts.jquery }}"></script>
+    {% block head %}{% endblock %}
   </head>
   <body>
     {% block nav %}{% include "./shared/nav.html" %}{% endblock %}
     {% block content %}{% endblock %}
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-    {% if isProduction %}
-    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-    {% else %}
-    <script src="{{mount}}/javascripts/bootstrap.min.js"></script>
-    {% endif %}
-    <script src="{{mount}}/javascripts/jsoncan-dashboard.js"></script>
+    <script src="{{ javascripts.bootstrap }}"></script>
+    <script src="{{ javascripts.base }}"></script>
     {% block script %}{% endblock %}
     {% block footer%}
       {% include "./shared/footer.html" %}

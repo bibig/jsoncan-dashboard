@@ -51,7 +51,7 @@ jd.richText = function (names, mount) {
   tinymce.init({
     selector: names,
     language : 'zh_CN',
-    language_url : mount + '/javascripts/tinymce/langs/zh_CN.js',
+    language_url : mount + '/langs/tinymce_zh_CN.js',
     content_css : mount + '/stylesheets/tinymce_content.css',
     menu : {
         file   : {},
