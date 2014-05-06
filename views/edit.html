@@ -1,0 +1,12 @@
+{% extends './layout.html' %}
+
+{% block content %}
+    <div class="container">
+			{{ breadcrumbs|safe }}
+      {{ form|safe }}
+    </div>
+{% endblock %}
+
+{% block script %}
+  <script src="{{ javascripts.tinymce }}"></script>
+{% endblock %}

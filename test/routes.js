@@ -22,8 +22,8 @@ describe('Routes class unit test', function () {
   
   it('test list route with page and query', function () {
     var page = 9;
-    var q = {a: 'b'};
-    assert.equal(routes.listRoute(page, q), '/mount/people/page/' + page + '/?a=b');
+    var q = {a: 'b', b: 'c'};
+    assert.equal(routes.listRoute(page, q), '/mount/people/page/' + page + '/?a=b&b=c');
   });
   
   it('test add route', function () {

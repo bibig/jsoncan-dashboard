@@ -2,13 +2,13 @@
  * present value for a record
  */
 
-exports.create = create;
+exports.create        = create;
 exports.getFieldNames = getFieldNames;
-exports.getFieldName = getFieldName;
-exports.setCsrfAjax = setCsrfAjax;
-exports.addLink = addLink;
+exports.getFieldName  = getFieldName;
+exports.setCsrfAjax   = setCsrfAjax;
+exports.addLink       = addLink;
 
-var Html = require('htmler');
+var Html   = require('htmler');
 var Routes = require('./routes');
 
 function create (config, record) {
@@ -17,27 +17,28 @@ function create (config, record) {
 
 function Present (config, record) {
   
-  this.routes = config.routes;
-  this.schemas = config.schemas;
-  this.showFields = config.showFields;
+  this.routes          = config.routes;
+  this.schemas         = config.schemas;
+  this.showFields      = config.showFields;
   
-  this.hasEditAction = config.hasEditAction;
-  this.hasAddAction = config.hasAddAction;
+  this.hasEditAction   = config.hasEditAction;
+  this.hasAddAction    = config.hasAddAction;
   this.hasDeleteAction = config.hasDeleteAction;
-  this.hasViewAction = config.hasViewAction;
+  this.hasViewAction   = config.hasViewAction;
   
-  this.token = config.token;
-  
-  this.record = record || {};
+  this.token           = config.token;
+  this.record          = record || {};
   this.referenceRoutes = {};
 }
 
 function getFieldNames (names) {
-	var fieldNames = [];
-	names.forEach(function (name) {
-		fieldNames.push(getFieldName(name));
-	});
-	return fieldNames;
+  var fieldNames = [];
+
+  names.forEach(function (name) {
+    fieldNames.push(getFieldName(name));
+  });
+
+  return fieldNames;
 }
 
 function getFieldName (name) {
@@ -69,16 +70,19 @@ Present.prototype.show = function (name) {
   var self = this;
   
   if (refFieldName) {
+
     if (this.record[fieldName]) {
       present = this.record[fieldName][refFieldName];
     } else {
       present = null;
     }
+
   } else {
     present = this.record[fieldName];
   }
 
   types.forEach(function (type) {
+
     switch (type) {
       case 'image':
         present = self.image(fieldName);
@@ -96,7 +100,6 @@ Present.prototype.show = function (name) {
   });
   
   return present;
-  
 };
 
 Present.prototype.getFieldName = getFieldName;
@@ -104,12 +107,14 @@ Present.prototype.getFieldName = getFieldName;
 Present.prototype.image = function (name) {
   var filename = this.record[name];
   var src = this.schemas.imageSrc(name, filename);
+
   return Html.img({src: src});
 };
 
 Present.prototype.thumb = function (name) {
   var filename = this.record[name];
   var src = this.schemas.thumbSrc(name, filename);
+
   return Html.img({src: src});
 };
 
@@ -126,6 +131,7 @@ Present.prototype.link = function (name, text) {
 
 Present.prototype.strong = function (name) {
   var value = this.record[name];
+
   return Html.strong().html(value);
 };
 
@@ -172,9 +178,11 @@ Present.prototype.addLink = function (isButton, extraClass) {
   if ( ! this.hasAddAction ) { return null; }
   
   this.schemas.forEachRefField(function (name) {
+
     if (self.record[name] !== undefined && self.record[name] !== null && self.record[name] !== '') {
       q[name] = self.record[name]._id;
     }
+
   });
   
   return addLink(this.routes.addRoute(q), isButton, extraClass);
@@ -198,6 +206,7 @@ function addLink (url, isButton, extraClass) {
 
 Present.prototype.viewLink = function (text) {
   if (this.hasViewAction) { return null; }
+  
   return Html.a({href: this.routes.viewRoute(this.record._id)}).html(text || '查看');
 };
 
@@ -231,4 +240,4 @@ Present.prototype.refViewLink = function (name, text) {
 
 function setCsrfAjax (config) {
   return config.token ? Html.script().html('$(function () { jd.setCsrf("' + config.token + '"); });') : '';
-};
+}

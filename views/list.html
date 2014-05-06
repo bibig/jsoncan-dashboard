@@ -1,0 +1,10 @@
+{% extends './layout.html' %}
+
+{% block content %}
+	<div class="container">
+		{{ breadcrumbs|safe }}
+		{{ title|safe }}
+    {{ list|safe }}
+    {{ pages|safe }}
+  </div>
+{% endblock %}
