@@ -16,8 +16,7 @@ jd.del = function (url) {
       type: "DELETE"
     });
 
-    jqXHR.fail(function (data) { 
-      console.log(data);
+    jqXHR.fail(function (data) {
       alert(data.responseJSON.error);
     });
 
@@ -46,14 +45,14 @@ jd.onlySubmitOnce = function (formId, btnId) {
   return this;
 };
 
-jd.richText = function (names) {
+jd.richText = function (names, mount) {
   if (! names ) { return; }
   
   tinymce.init({
     selector: names,
     language : 'zh_CN',
-    language_url : '/javascripts/tinymce/langs/zh_CN.js',
-    content_css : "/stylesheets/tinymce_content.css",
+    language_url : mount + '/javascripts/tinymce/langs/zh_CN.js',
+    content_css : mount + '/stylesheets/tinymce_content.css',
     menu : {
         file   : {},
         edit   : {title : 'Edit'  , items : 'undo redo | cut copy paste pastetext | selectall'},

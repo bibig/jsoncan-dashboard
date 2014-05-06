@@ -1,0 +1,12 @@
+{% extends './layout.html' %}
+
+{% block content %}
+    <div class="container">
+			{{ breadcrumbs|safe }}
+      {{ table|safe }}
+			
+			{% if hasManyList %}
+				{{ hasManyList|safe }}
+			{% endif %}
+    </div>
+{% endblock %}

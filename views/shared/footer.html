@@ -1,0 +1,12 @@
+<div class="admin-footer">
+  {% if footbars %}
+    <center>
+    {% for bar in footbars %}
+      {{ bar|safe }}
+    {% endfor %}
+    </center>
+  {% endif%}
+  {% if currentDate %}
+  <center>&copy; {{ currentDate[0] }}</center>
+  {% endif %}
+</div>
