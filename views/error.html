@@ -1,0 +1,19 @@
+{% extends './layout.html' %}
+{% set pageTitle = '出错了' %}
+
+{% block content %}
+  <div class="container">
+    <div class="text-center">
+      <h1>{{ message }}</h1>
+      <div style="margin: 2em auto;">
+        <img src="{{ mount }}/images/ghost.png" />
+      </div>
+      {% if error %}
+        <h2>{{ error.status }}</h2>
+        <div class="text-left">
+          <pre>{{ error.stack }}</pre>
+        </div>
+      {% endif %}
+    </div>
+  </div><!-- end of container-->
+{% endblock %}

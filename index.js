@@ -55,7 +55,8 @@ Dashboards.prototype.initApp = function () {
   var swig           = require('swig');
   // var swigExtras  = require('swig-extras');
   var app            = express();
-  var isProduction   = app.get('env') === 'production';
+
+  app.isProduction   = app.get('env') === 'production';
 
   // swigExtras.useFilter(swig, 'nl2br');
 
@@ -63,7 +64,7 @@ Dashboards.prototype.initApp = function () {
   app.set('view engine', 'html');
   app.set('views', path.join(__dirname, 'views'));
 
-  if ( ! isProduction ) {
+  if ( ! app.isProduction ) {
     app.set('view cache', false);
     swig.setDefaults({ cache: false });
   }
@@ -85,8 +86,8 @@ Dashboards.prototype.initApp = function () {
 
   app.use(require('stylus').middleware({
      src:__dirname + '/public',
-  	 compress: (isProduction ? true : false),
-  	 force: (isProduction ?  false : true)
+  	 compress: (app.isProduction ? true : false),
+  	 force: (app.isProduction ?  false : true)
    }));
 
   app.use(cookieParser('dashboards admin'));
@@ -97,13 +98,47 @@ Dashboards.prototype.initApp = function () {
   this.app = app;
 };
 
+Dashboards.prototype.initErrorHandler = function () {
+  /// error handlers
+  // development error handler
+  // will print stacktrace
+  /// catch 404 and forwarding to error handler
+  this.app.use(function(req, res, next) {
+      var err = new Error('对不起，页面不存在');
+      err.status = 404;
+      next(err);
+  });
+
+  if (! this.app.isProduction ) {
+    
+    this.app.use(function(err, req, res, next) {
+      res.status(err.status || 500);
+      // res.send('对不起，后台发生错误');
+      res.render('error', {
+          message: err.message,
+          error: err
+      });
+    });
+
+  }
+
+  // production error handler
+  // no stacktraces leaked to user
+  this.app.use(function(err, req, res, next) {
+      res.status(err.status || 500);
+      res.render('error', {
+          message: err.message
+      });
+  });
+
+};
+
 Dashboards.prototype.initLocals = function () {
 
   if ( ! this.app) { return; }
 
   var currentDate = new Date();
 
-  // this.app.locals.isProduction = this.app.get('env') === 'production';
   this.app.locals.mount        = this.settings.mount;
   this.app.locals.currentDate  = [currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate()];
 
@@ -164,6 +199,8 @@ Dashboards.prototype.add = function (tableName, config) {
 
 };
 
+// this fn should invoke at last
 Dashboards.prototype.addIndexPage = function () {
   Controller.indexPage(this);
+  this.initErrorHandler();
 };
