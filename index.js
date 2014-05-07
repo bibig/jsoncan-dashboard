@@ -4,7 +4,8 @@ exports = module.exports = Dashboards;
 var path       = require('path');
 var Controller = require('./libs/controller');
 var yi         = require('yi');
-var Helpers      = require('./Helpers');
+var Helpers    = require('./Helpers');
+var CONFIG     = require('./libs/config');
 
 function Dashboards (can, settings, tables) {
   this.can      = can;
@@ -54,7 +55,6 @@ Dashboards.prototype.initApp = function () {
   var swig           = require('swig');
   // var swigExtras  = require('swig-extras');
   var app            = express();
-  var defaultFavicon = path.join(__dirname, 'public/images/favicon.ico');
   var isProduction   = app.get('env') === 'production';
 
   // swigExtras.useFilter(swig, 'nl2br');
@@ -73,7 +73,7 @@ Dashboards.prototype.initApp = function () {
   // app.set('view engine', 'jade');
 
 
-  app.use(favicon(this.settings.favicon || defaultFavicon));
+  app.use(favicon(this.settings.favicon || CONFIG.favicon));
   // app.use(logger('dev'));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded());
@@ -126,17 +126,17 @@ Dashboards.prototype.initLocals = function () {
   }
 
   this.app.locals.stylesheets           = this.settings.stylesheets;
-  this.app.locals.stylesheets.base      = this.settings.stylesheets.base || this.settings.mount + '/stylesheets/admin.css';
-  this.app.locals.stylesheets.bootstrap = this.settings.stylesheets.bootstrap || '//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css';
-  this.app.locals.stylesheets.fa        = this.settings.stylesheets.fa || '//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css';
+  this.app.locals.stylesheets.base      = this.settings.stylesheets.base || this.settings.mount + CONFIG.stylesheets.base;
+  this.app.locals.stylesheets.bootstrap = this.settings.stylesheets.bootstrap || CONFIG.stylesheets.bootstrap;
+  this.app.locals.stylesheets.fa        = this.settings.stylesheets.fa || CONFIG.stylesheets.fa;
   
   this.app.locals.javascripts           = this.settings.javascripts;
-  this.app.locals.javascripts.base      = this.settings.javascripts.base || this.settings.mount + '/javascripts/jsoncan-dashboard.js';
-  // this.app.locals.javascripts.jquery    = this.settings.javascripts.jquery || 'http://libs.baidu.com/jquery/1.10.2/jquery.min.js';
-  this.app.locals.javascripts.jquery    = this.settings.javascripts.jquery || 'http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.0.min.js';
+  this.app.locals.javascripts.base      = this.settings.javascripts.base || this.settings.mount + CONFIG.javascripts.base;
+  
+  this.app.locals.javascripts.jquery    = this.settings.javascripts.jquery || CONFIG.javascripts.jquery;
 
-  this.app.locals.javascripts.bootstrap = this.settings.javascripts.bootstrap || '//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js';
-  this.app.locals.javascripts.tinymce   = this.settings.javascripts.tinymce || '//tinymce.cachefly.net/4.0/tinymce.min.js';
+  this.app.locals.javascripts.bootstrap = this.settings.javascripts.bootstrap || CONFIG.javascripts.bootstrap;
+  this.app.locals.javascripts.tinymce   = this.settings.javascripts.tinymce || CONFIG.javascripts.tinymce;
 
 };
 
