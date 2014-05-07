@@ -1,7 +1,7 @@
 exports.bindApp = bindApp;
 exports.getApp = getApp;
 
-var Dashboards = require('../../index');
+var Dashboards = require('../index');
 var can = require('./can');
 var path = require('path');
 var tables = {};
@@ -97,19 +97,26 @@ tables.articleImages = {
 function getApp () {
   var dashboards = new Dashboards(can, {
     mainSiteName: '测试网站',
-    logo: '/|xxxx网站|.:navbar-brand|i:eye-open',
+    logo: '/|jsoncan-dashboard-sandbox|.:navbar-brand|i:eye-open',
     mainToolbars: [
       '/|i:th|dashboards',
-      'http://www.apple.com|i:fa-bolt|apple', 
-      'http://www.google.com|i:@|google'
+      'http://www.apple.com|i:fa-apple|apple', 
+      '/articles/add|i:+|articles'
     ],
     rightToolbars: ['/logout|i:off|退出'],
-    footbars: ['测试网站, 权利所有']
+    footbars: ['测试网站, 权利所有'],
+    stylesheets: {
+      bootstrap: '/stylesheets/bootstrap.min.css',
+      fa: '/stylesheets/font-awesome.min.css'
+    },
+    javascripts: {
+      jquery: '/javascripts/jquery-1.11.0.min.js',
+      bootstrap: '/javascripts/bootstrap.min.js'
+    }
   }, tables);
 
   // dashboards.add('site', tables.site);
   dashboards.addIndexPage();
-  
   
   return dashboards.app;
 
