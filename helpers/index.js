@@ -8,5 +8,3 @@ exports.form  = require('./form');
 exports.pages = require('./pages');
 exports.grids = require('./grids');
 exports.media = require('./media');
-exports.icons = require('./icons');
-exports.anchor = require('./anchor');

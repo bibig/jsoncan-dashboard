@@ -4,7 +4,8 @@ exports = module.exports = Dashboards;
 var path       = require('path');
 var Controller = require('./libs/controller');
 var yi         = require('yi');
-var Helpers    = require('./Helpers');
+// var Helpers = require('./Helpers');
+var BH         = require('bootstrap-helper');
 var CONFIG     = require('./libs/config');
 
 function Dashboards (can, settings, tables) {
@@ -144,20 +145,20 @@ Dashboards.prototype.initLocals = function () {
 
   // prepare for logo
   if (yi.isNotEmpty(this.settings.logo)) {
-    this.app.locals.logo = Helpers.anchor.render(this.settings.logo);
+    this.app.locals.logo = BH.anchors.render(this.settings.logo);
   }
 
   // prepare for nav links, render toolbars
   if (yi.isNotEmpty(this.settings.mainToolbars)) {
-    this.app.locals.mainToolbars = Helpers.anchor.render(this.settings.mainToolbars); 
+    this.app.locals.mainToolbars = BH.anchors.render(this.settings.mainToolbars); 
   }
 
   if (yi.isNotEmpty(this.settings.rightToolbars)) {
-    this.app.locals.rightToolbars = Helpers.anchor.render(this.settings.rightToolbars);
+    this.app.locals.rightToolbars = BH.anchors.render(this.settings.rightToolbars);
   }
 
   if (yi.isNotEmpty(this.settings.footbars)) {
-    this.app.locals.footbars = Helpers.anchor.render(this.settings.footbars);
+    this.app.locals.footbars = BH.anchors.render(this.settings.footbars);
   }
 
   this.app.locals.stylesheets           = this.settings.stylesheets;
