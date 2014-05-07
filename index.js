@@ -43,7 +43,7 @@ Dashboards.prototype.initApp = function () {
   if (this.app) return;
 
   var express        = require('express');
-  var favicon        = require('static-favicon');
+  var favicon        = require('serve-favicon');
   var logger         = require('morgan');
   var cookieParser   = require('cookie-parser');
   var bodyParser     = require('body-parser');
@@ -75,7 +75,7 @@ Dashboards.prototype.initApp = function () {
 
 
   app.use(favicon(this.settings.favicon || CONFIG.favicon));
-  // app.use(logger('dev'));
+  app.use(logger('dev'));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded());
 
