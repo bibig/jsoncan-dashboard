@@ -100,6 +100,12 @@ Dashboards.prototype.initApp = function () {
 };
 
 Dashboards.prototype.initErrorHandler = function () {
+  var tailbone = require('tailbone').create();
+
+  tailbone.enable(this.app);
+};
+
+/*Dashboards.prototype.initErrorHandler = function () {
   /// error handlers
   // development error handler
   // will print stacktrace
@@ -132,7 +138,7 @@ Dashboards.prototype.initErrorHandler = function () {
       });
   });
 
-};
+};*/
 
 Dashboards.prototype.initLocals = function () {
 

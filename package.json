@@ -31,7 +31,8 @@
     "async"              : "*",
     "inflection"         : "*",
     "debug"              : "*",
-    "sanitizer"          : "*"
+    "sanitizer"          : "*",
+    "tailbone"           : "*"
   },
   "devDependencies": {
     "supertest"  : "*",
