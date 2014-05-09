@@ -4,32 +4,16 @@ exports = module.exports = Dashboards;
 var path       = require('path');
 var Controller = require('./libs/controller');
 var yi         = require('yi');
-// var Helpers = require('./Helpers');
-var BH         = require('bootstrap-helper');
+var Config     = require('./config');
 
 function Dashboards (can, settings, tables) {
   this.can = can;
-  this.initConfig(settings);
+  this.config = Config.create(settings);
   this.initApp();
-  this.initLocals();
   this.tables = tables || {};
   // if tables is not empty, add all related controller immediately
   this.addAll();
 }
-
-Dashboards.prototype.initConfig = function (settings) {
-  var Config = require('./config');
-  
-  settings = yi.merge(settings, {
-    mount           : '',
-    viewMount       : '',  // important, for static source url
-    staticRoot      : '/dashboards-assets'  // the route app serve the static files
-  });
-
-  if (! settings.viewMount && settings.mount ) { settings.viewMount = settings.mount; }
-
-  this.config = yi.merge(settings, Config.create(settings.viewMount, settings.staticRoot));
-};
 
 /**
  * [initApp description]
@@ -95,6 +79,8 @@ Dashboards.prototype.initApp = function () {
   app.use(csrf());
   app.use(this.config.staticRoot, express.static(path.join(__dirname, 'public')));
 
+  yi.merge(app.locals, this.config);
+
   this.app = app;
 };
 
@@ -104,37 +90,6 @@ Dashboards.prototype.initErrorHandler = function () {
   });
 
   tailbone.enable(this.app);
-};
-
-
-Dashboards.prototype.initLocals = function () {
-
-  if ( ! this.app) { return; }
-
-  yi.merge(this.app.locals, this.config);
-
-  var currentDate = new Date();
-
-  this.app.locals.currentDate  = [currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate()];
-
-  // prepare for logo
-  if (yi.isNotEmpty(this.config.logo)) {
-    this.app.locals.logo = BH.anchors.render(this.config.logo);
-  }
-
-  // prepare for nav links, render toolbars
-  if (yi.isNotEmpty(this.config.mainToolbars)) {
-    this.app.locals.mainToolbars = BH.anchors.render(this.config.mainToolbars); 
-  }
-
-  if (yi.isNotEmpty(this.config.rightToolbars)) {
-    this.app.locals.rightToolbars = BH.anchors.render(this.config.rightToolbars);
-  }
-
-  if (yi.isNotEmpty(this.config.footbars)) {
-    this.app.locals.footbars = BH.anchors.render(this.config.footbars);
-  }
-
 };
 
 /**
