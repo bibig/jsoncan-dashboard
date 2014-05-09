@@ -24,7 +24,7 @@ Views.prototype.viewFile = function (name) {
   var viewPath, viewName;
 
 	if ( ! view ) {
-    viewPath = this.controller.dashboards.settings.viewPath;
+    viewPath = this.controller.dashboards.config.viewPath;
     viewName = settings.viewName || this.getDefaultViewName(name);
 
     if (viewPath) {
@@ -102,7 +102,7 @@ Views.prototype.breadcrumbs = function (layers) {
   var li   = Html.li;
   var a    = Html.a;
   var list = [
-		li().html(a({href: this.controller.routes.mount}).html(this.controller.dashboards.settings.title))
+		li().html(a({href: this.controller.routes.mount}).html(this.controller.dashboards.config.title))
 	];
 	
 	layers.forEach(function (layer) {

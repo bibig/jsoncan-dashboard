@@ -20,9 +20,9 @@ describe('<basic test>', function () {
   });
 
   describe('get static asserts', function () {
-    it('get /javascripts/jsoncan-dashboard.js', function (done) {
+    it('get /dashboards-assets/javascripts/jsoncan-dashboard.js', function (done) {
       request(app)
-        .get('/javascripts/jsoncan-dashboard.js')
+        .get('/dashboards-assets/javascripts/jsoncan-dashboard.js')
         .expect(200)
         .expect('Content-Type', /javascript/)
         .end(function (e, res) {

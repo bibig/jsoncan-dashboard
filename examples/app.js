@@ -1,4 +1,8 @@
+var mainApp    = require('express')();
 var dashboards = require('./dashboards');
-var app        = dashboards.getApp();
+var mount      = '/admin';
+var app        = dashboards.getApp(mount);
 
-app.listen(4000);
+mainApp.use(mount, app);
+
+mainApp.listen(4000);

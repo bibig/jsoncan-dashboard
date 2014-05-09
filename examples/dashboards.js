@@ -1,4 +1,3 @@
-exports.bindApp = bindApp;
 exports.getApp = getApp;
 
 var Dashboards = require('../index');
@@ -94,24 +93,26 @@ tables.articleImages = {
 };
 
 
-function getApp () {
+function getApp (mount) {
   var dashboards = new Dashboards(can, {
+    mount: mount,
+    viewMount: mount,
     mainSiteName: '测试网站',
     logo: '/|jsoncan-dashboard-sandbox|.:navbar-brand|i:eye-open',
     mainToolbars: [
-      '/|i:th|dashboards',
+      mount + '/|i:th|dashboards',
       'http://www.apple.com|i:fa-apple|apple', 
-      '/articles/add|i:+|articles'
+      mount+ '/articles/add|i:+|articles'
     ],
     rightToolbars: ['/logout|i:off|退出'],
     footbars: ['测试网站, 权利所有'],
     stylesheets: {
-      bootstrap: '/stylesheets/bootstrap.min.css',
-      fa: '/stylesheets/font-awesome.min.css'
+      bootstrap: mount + '/dashboards-assets/stylesheets/bootstrap.min.css',
+      fa: mount + '/dashboards-assets/stylesheets/font-awesome.min.css'
     },
     javascripts: {
-      jquery: '/javascripts/jquery-1.11.0.min.js',
-      bootstrap: '/javascripts/bootstrap.min.js'
+      jquery: mount + '/dashboards-assets/javascripts/jquery-1.11.0.min.js',
+      bootstrap: mount + '/dashboards-assets/javascripts/bootstrap.min.js'
     }
   }, tables);
 
@@ -120,20 +121,4 @@ function getApp () {
   
   return dashboards.app;
 
-}
-
-function bindApp (app, mount) {
-  var dashboards;
-  
-  mount = mount || '/admin';
-
-  dashboards = new Dashboards(can, {
-    mount: mount,
-    title: 'admin dashboards'
-  });
-
-  dashboards.add('site', tables.site);
-  dashboards.addIndexPage();
-  
-  app.use(mount, dashboards.app);
 }

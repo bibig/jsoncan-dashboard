@@ -69,6 +69,8 @@ Present.prototype.show = function (name) {
   var present = this.record[fieldName];
   var self = this;
   
+  if ( ! present ) { return ''; }
+
   if (refFieldName) {
 
     if (this.record[fieldName]) {

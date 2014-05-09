@@ -19,7 +19,7 @@ var Upload     = require('./upload');
 function indexPage (dashboards) {
   var routesMap = {};
   var tables    = Object.keys(dashboards.tables);
-  var mount     = dashboards.settings.mount;
+  var mount     = dashboards.config.mount;
   var indexAction;
   
   if (tables.length === 0) { return; }
@@ -48,7 +48,7 @@ function Controller (dashboards, name) {
   this.tableName       = name;
   this.Table           = dashboards.can.open(name);
   this.settings        = dashboards.tables[name];
-  this.mount           = dashboards.settings.mount;
+  this.mount           = dashboards.config.mount;
   this.schemas         = Schemas.create(this.Table.getFields());
   this.routes          = Routes.create(this.mount, name);
   this.views           = Views.create(this);

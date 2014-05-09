@@ -1,7 +1,7 @@
 exports.create = create;
 
 var path = require('path');
-var yi = require('yi');
+var yi   = require('yi');
 
 var config = {
   title       : 'dashboards',
@@ -23,7 +23,7 @@ function create (viewMount, staticRoot) {
 
   config.javascripts.base = path.join(viewMount, staticRoot, '/javascripts/jsoncan-dashboard.js');
   config.stylesheets.base = path.join(viewMount, staticRoot, '/stylesheets/admin.css');
-  config.mainToolbars     = [ path.join(viewMount, '/') + '|i:th|' + config.title ];
+  config.mainToolbars     = [ path.join(viewMount + '/') + '|i:th|' + config.title ];
 
   return yi.clone(config);
 }
