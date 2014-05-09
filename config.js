@@ -3,7 +3,7 @@ exports.create = create;
 var path = require('path');
 var yi   = require('yi');
 
-var config = {
+var Config = {
   title       : 'dashboards',
   favicon     : path.join(__dirname, './public/images/favicon.ico'),
   javascripts : {
@@ -20,10 +20,11 @@ var config = {
 
 // all local url should added viewMount and staticRoot
 function create (viewMount, staticRoot) {
+  var config = yi.clone(Config);
 
   config.javascripts.base = path.join(viewMount, staticRoot, '/javascripts/jsoncan-dashboard.js');
   config.stylesheets.base = path.join(viewMount, staticRoot, '/stylesheets/admin.css');
   config.mainToolbars     = [ path.join(viewMount + '/') + '|i:th|' + config.title ];
 
-  return yi.clone(config);
+  return config;
 }
