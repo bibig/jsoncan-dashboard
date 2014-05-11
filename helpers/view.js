@@ -19,7 +19,7 @@ function render (record, config) {
   var present    = Present.create(config, record);
   var tableId    = 'view-' + config.tableName;
   var editLink, deleteLink, addLink, hasManyPartHtml;
-  
+
   config.showFields.forEach(function (name) {
     var fieldName = Present.getFieldName(name);
     var field = schemas.getField(fieldName);

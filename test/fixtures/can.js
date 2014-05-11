@@ -202,6 +202,25 @@ var tables = {
       type: 'modified',
       format: timestampFormat
     }
+  },
+
+  sessionRelatedTable: {
+    title: {
+      type: 'string',
+      isInput: true,
+      required: true,
+      max: 40
+    },
+    username: {
+      type: 'string',
+      required: true,
+      readonly: true,
+      session: function (req) {
+        return req.session.username;
+      },
+
+      max: 40
+    }
   }
 };
 

@@ -7,6 +7,13 @@ var Config = {
     mount       : '',
     viewMount   : '',  // important, for static source url
     staticRoot  : '/dashboards-assets',  // the route app serve the static files
+
+    cookieSecret : 'dashboards',
+    session: {
+      keys   : ['jsoncan', 'dashboards'],
+      maxAge : 60 * 60 * 1000
+    }, 
+
     title       : 'dashboards',
     favicon     : path.join(__dirname, './public/images/favicon.ico'),
     javascripts : {
@@ -27,23 +34,27 @@ function create (settings) {
   var currentDate = new Date();
   var config      = yi.merge(settings, yi.clone(Config));
   
-  if (! config.viewMount && config.mount ) { config.viewMount = config.mount; }
-
-  config.javascripts.base = path.join(config.viewMount, config.staticRoot, '/javascripts/jsoncan-dashboard.js');
-  config.stylesheets.base = path.join(config.viewMount, config.staticRoot, '/stylesheets/admin.css');
-  config.mainToolbars     = [ path.join(config.viewMount + '/') + '|i:th|' + config.title ];
-
+  if ( ! config.viewMount && config.mount ) { config.viewMount = config.mount; }
 
   config.currentDate  = [currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate()];
+
+  if ( ! config.javascripts.base ) {
+    config.javascripts.base = path.join(config.viewMount, config.staticRoot, '/javascripts/jsoncan-dashboard.js');
+  }
+
+  if ( ! config.stylesheets.base ) {
+    config.stylesheets.base = path.join(config.viewMount, config.staticRoot, '/stylesheets/admin.css');  
+  }
+  
+  if ( ! config.mainToolbars ) {
+    config.mainToolbars     = [ config.viewMount + '|i:th|' + config.title ];  
+  }
+
+  config.mainToolbars = BH.anchors.render(config.mainToolbars); 
 
   // prepare for logo
   if (yi.isNotEmpty(config.logo)) {
     config.logo = BH.anchors.render(config.logo);
-  }
-
-  // prepare for nav links, render toolbars
-  if (yi.isNotEmpty(config.mainToolbars)) {
-    config.mainToolbars = BH.anchors.render(config.mainToolbars); 
   }
 
   if (yi.isNotEmpty(config.rightToolbars)) {
@@ -53,6 +64,8 @@ function create (settings) {
   if (yi.isNotEmpty(config.footbars)) {
     config.footbars = BH.anchors.render(config.footbars);
   }
+
+  // console.log(config);
 
   return config;
 }

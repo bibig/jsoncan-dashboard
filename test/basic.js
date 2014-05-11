@@ -2,7 +2,6 @@ var request       = require('supertest');
 var superagent    = require('superagent');
 var cheerio       = require('cheerio');
 var should        = require('should');
-var assert        = require('assert');
 var dashboards    = require('./fixtures/dashboards');
 var app           = dashboards.getApp();
 var utils         = require('./libs/utils');
@@ -11,7 +10,7 @@ var PATH          = path.join(__dirname, 'fixtures', 'data');
 var can           = require('./fixtures/can');
 var fs            = require('fs');
 
-var uploadTmpPath = path.join(__dirname, '../public/uploads');
+var uploadTmpPath = path.join(__dirname, '../tmp');
 
 
 describe('<basic test>', function () {
@@ -19,7 +18,7 @@ describe('<basic test>', function () {
     utils.clear(PATH, done);
   });
 
-  describe('get static asserts', function () {
+  describe('get static assets', function () {
     it('get /dashboards-assets/javascripts/jsoncan-dashboard.js', function (done) {
       request(app)
         .get('/dashboards-assets/javascripts/jsoncan-dashboard.js')
@@ -64,7 +63,7 @@ describe('<basic test>', function () {
           // console.log(res.text);
           location = res.headers.location;
           // console.log(res.headers);
-          assert.equal('/site/add', location);
+          should(location).eql('/site/add');
           done();
         });
     });
@@ -114,7 +113,6 @@ describe('<basic test>', function () {
           if (e) { console.error(e); console.log(e.stack);}
 
           should.not.exist(e);
-          // assert.ok(res.text.indexOf('/admin/site/add') > -1);
           // console.log(res.headers);
           // console.log(res.text);
           location = res.headers.location;
@@ -133,8 +131,8 @@ describe('<basic test>', function () {
           should.not.exist(e);
           
           var $ = cheerio.load(res.text);
-          assert.equal(adminUser, $('.td-adminUser', '#view-site').html());
-          assert.equal(adminPassword, $('.td-adminPassword', '#view-site').html());
+          should(adminUser).eql($('.td-adminUser', '#view-site').html());
+          should(adminPassword).eql($('.td-adminPassword', '#view-site').html());
           done();
         });
     });
@@ -347,9 +345,11 @@ describe('<basic test>', function () {
           // console.log(res.text);
           should.not.exist(e);
 
-          (fs.readdirSync(imagesPath).length).should.eql(1); // 1 refer to 'thumbs' sub-folder
-          (fs.readdirSync(thumbsPath).length).should.eql(0);
-          (fs.readdirSync(uploadTmpPath).length).should.eql(0);
+          // console.log(fs.readdirSync(uploadTmpPath));
+
+          should(fs.readdirSync(imagesPath).length).eql(1); // 1 refer to 'thumbs' sub-folder
+          should(fs.readdirSync(thumbsPath).length).eql(0);
+          should(fs.readdirSync(uploadTmpPath).length).eql(0);
           
           // console.log(res.req.files);
           // console.log(res.headers);
@@ -376,7 +376,7 @@ describe('<basic test>', function () {
           should(res.text).match(/文件太大/);
           should.not.exist(e);
 
-          (fs.readdirSync(uploadTmpPath).length).should.eql(0);
+          should(fs.readdirSync(uploadTmpPath).length).eql(0);
           // console.log(res.headers);
           done();
         });
@@ -398,7 +398,7 @@ describe('<basic test>', function () {
           // console.log(res.text);
           should.not.exist(e);
           location = res.headers.location;
-          (fs.readdirSync(uploadTmpPath).length).should.eql(0);
+          should(fs.readdirSync(uploadTmpPath).length).eql(0);
           // console.log(res.headers);
           done();
         });

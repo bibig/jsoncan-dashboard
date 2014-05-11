@@ -28,7 +28,7 @@ Schemas.prototype.inputFields = function () {
 
   this.forEachField(function (name, field) {
     list.push(name);
-  }, function (field) {
+  }, function (name, field) {
     return field.isInput;
   });
 
@@ -45,37 +45,27 @@ Schemas.prototype.safeFilters = function (hash) {
  */
 Schemas.prototype.forEachField = function (callback, whiteList) {
   var self = this;
-  var filter;
 
-  if ( !whiteList ) {
-    whiteList = Object.keys(this.fields);
-  } else if ( !Array.isArray(whiteList) && typeof whiteList == 'object') {
-    whiteList = Object.keys(whiteList);
-  } else if (typeof whiteList == 'function') {
-    filter = whiteList;
-    whiteList = Object.keys(this.fields);
-  }
-  
-  whiteList.forEach(function (name) {
-    var field = self.fields[name];
-    
-    if (filter) {
-      if (!filter(field)) return;
-    }
+  yi.forEach(this.fields, function (name, field) {
     
     if (field) {
       field.name = name; // important!
-      callback(name, field, self);
-    } else {
-      // throw new Error('invalid field: ' + name);
+      callback(name, field, self);  
     }
-    
-  });
+
+  }, whiteList);
+
 };
 
 Schemas.prototype.forEachRefField = function (callback) {
-  this.forEachField(callback, function (field) {
+  this.forEachField(callback, function (name, field) {
     return field.type == 'ref';
+  });
+};
+
+Schemas.prototype.forEachSessionField = function (callback) {
+  this.forEachField(callback, function (name, field) {
+    return yi.isNotEmpty(field.session) && typeof field.session === 'function';
   });
 };
 

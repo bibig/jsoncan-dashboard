@@ -47,7 +47,7 @@ tables.articles = {
   },
   list: {
     showFields: ['title|link', '_articleCategory.name|link', 'isPublic', 'hasImages', 'imagesCount', 'created'],
-    query: {
+    dropdown: {
       name  : 'articleCategories.name',
       title : '所属分类',
     },
@@ -76,7 +76,7 @@ tables.articleImages = {
   }, 
   list: {
     showFields: ['seq', 'title', 'image|thumb|link', '_article.title|link', 'created'],
-    query: {
+    dropdown: {
       name  : 'articles.title',
       title : 'ariticle',
       order : ['created', true],
@@ -90,6 +90,24 @@ tables.articleImages = {
   view: {
     showFields : ['seq', 'title', 'image|image', 'memo', '_article.title|link', 'created', 'modified'],
     isFormat   : true
+  }
+};
+
+tables.sessionRelatedTable = {
+  basic: {
+    title: 'session related table',
+    description: 'session related table management',
+    max: 100,
+    formLayout: ['title']
+  },
+  list: {
+    filters: {},
+    sessionFilters: {
+      username: function (req) { return req.session.username; }
+    }
+  },
+  view: {
+    showFields: ['title', 'username']
   }
 };
 
@@ -108,6 +126,12 @@ function getApp () {
   }, tables);
 
   // dashboards.add('site', tables.site);
+  
+  dashboards.app.get('/set-session', function (req, res, next) {
+    req.session.username = 'superman';
+    res.send('ok');
+  });
+
   dashboards.addIndexPage();
   
   

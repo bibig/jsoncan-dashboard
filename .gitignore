@@ -3,4 +3,6 @@ node_modules
 public/uploads
 test/fixtures/uploads
 test/fixtures/data
+test/fixtures/tmp/*
 examples/data
+tmp/*

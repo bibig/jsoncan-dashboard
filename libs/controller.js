@@ -19,7 +19,7 @@ var Upload     = require('./upload');
 function indexPage (dashboards) {
   var routesMap = {};
   var tables    = Object.keys(dashboards.tables);
-  var mount     = dashboards.config.mount;
+  var mount     = dashboards.config.viewMount;
   var indexAction;
   
   if (tables.length === 0) { return; }
@@ -48,7 +48,7 @@ function Controller (dashboards, name) {
   this.tableName       = name;
   this.Table           = dashboards.can.open(name);
   this.settings        = dashboards.tables[name];
-  this.mount           = dashboards.config.mount;
+  this.mount           = dashboards.config.viewMount;
   this.schemas         = Schemas.create(this.Table.getFields());
   this.routes          = Routes.create(this.mount, name);
   this.views           = Views.create(this);
@@ -127,7 +127,7 @@ Controller.prototype.setActionConfig = function (name, defaults) {
  * step 4: render view for browser
  * @params:
       config.locals
-      config.query
+      config.dropdown
       config.filters
       dashboard
  */
@@ -245,15 +245,15 @@ Controller.prototype.listActionRenderDropdownStep = function () {
   var config = this.settings.list;
   var self = this;
   
-  if ( ! config.query ) { return false; }
+  if ( ! config.dropdown ) { return false; }
   
   return function (req, res, next) {
-    var info        = config.query.name.split('.');
+    var info        = config.dropdown.name.split('.');
     var fieldName   = info[1] ? self.schemas.getReferenceField(info[0]) : info[0];
     var queryConfig = {
-      title        : config.query.title,
+      title        : config.dropdown.title,
       currentValue : req.query[fieldName],
-      qname        : config.query.ref || fieldName,
+      qname        : config.dropdown.ref || fieldName,
       routes       : self.routes
     };
     var table, textField, fields, query, schemaDefinedValues;
@@ -286,10 +286,10 @@ Controller.prototype.listActionRenderDropdownStep = function () {
       table = info[0];
       textField = info[1];
       fields = ['_id', textField];
-      query = self.dashboards.can.open(table).query(config.query.filters || {}).select(fields).limit(config.query.limit || 50);
+      query = self.dashboards.can.open(table).query(config.dropdown.filters || {}).select(fields).limit(config.dropdown.limit || 50);
     
-      if (config.query.order) {
-        query.order(config.query.order[0], config.query.order[1] || false);
+      if (config.dropdown.order) {
+        query.order(config.dropdown.order[0], config.dropdown.order[1] || false);
       }
     
       query.exec(function (e, records) {
@@ -311,7 +311,7 @@ Controller.prototype.listActionRenderMainTableStep = function () {
   return function (req, res, next) {
     var currentPage    = parseInt( req.params.page || 1 , 10);
     // will use for querying records and querying count
-    var filters        = self.schemas.safeFilters(req.query || {});
+    var filters        = self.schemas.safeFilters(req.query);
     var selectFields   = Present.getFieldNames(config.showFields);
     var referenceNames = self.schemas.getReferenceNames(selectFields);
     var skip, query;
@@ -321,6 +321,11 @@ Controller.prototype.listActionRenderMainTableStep = function () {
     }
     
     yi.merge(filters, config.filters);
+
+    // add session filters
+    yi.forEach(config.sessionFilters, function (name, fn) {
+      filters[name] = fn(req);
+    });
     
     skip = (currentPage - 1) * config.pageSize;
     query = self.Table.query(filters)
@@ -472,6 +477,16 @@ Controller.prototype.getPostData = function (req) {
   return req.body[inflection.singularize(this.tableName)] || {};
 };
 
+Controller.prototype.getSessionData = function (req) {
+  var data = {};
+
+  this.schemas.forEachSessionField(function (name, field) {
+    data[name] = field.session(req);
+  });
+
+  return data;
+};
+
 Controller.prototype.uploadAction = function () {
   var self = this;
   var upload;
@@ -506,6 +521,7 @@ Controller.prototype.uploadAction = function () {
             next(e);
           } else {
             yi.merge(self.getPostData(req), upload.data);
+
             if (_id) {// edit mode, should delete old file
               self.Table.find(_id).exec(function (e, record) {
                 
@@ -629,7 +645,7 @@ Controller.prototype.saveAction = function () {
   return function (req, res, next) {
     var isNew = true;
     var _id   = req.params.id;
-    var data  = self.getPostData(req);
+    var data  = yi.merge(self.getSessionData(req), self.getPostData(req));
     var model;
     var validFields;
 
@@ -649,6 +665,7 @@ Controller.prototype.saveAction = function () {
       
       data = self.schemas.convert(data, validFields);
       data = self.schemas.sanitize(data);
+      
       model = self.Table.create(data);
 
       if (Object.keys(req.errors).length === 0 && model.validate()) {
