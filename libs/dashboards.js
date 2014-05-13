@@ -69,12 +69,13 @@ Dashboards.prototype.initApp = function () {
     uploadDir: path.join(__dirname, '../public/uploads')
   }));
 
-  app.use(require('stylus').middleware({
+  /*
+   app.use(require('stylus').middleware({
      src:__dirname + '/public',
      compress: (app.isProduction ? true : false),
      force: (app.isProduction ?  false : true)
    }));
-
+  */
   app.use(cookieParser(this.config.cookieSecret));
   app.use(session(this.config.session));
   app.use(shine());
