@@ -1,15 +1,16 @@
 
-var request       = require('supertest');
-var superagent    = require('superagent');
-var cheerio       = require('cheerio');
-var should        = require('should');
-var dashboards    = require('./fixtures/dashboards');
-var app           = dashboards.getApp();
-var utils         = require('./libs/utils');
-var path          = require('path');
-var PATH          = path.join(__dirname, 'fixtures', 'session-related-data');
-var can           = require('./fixtures/can');
-var fs            = require('fs');
+var request    = require('supertest');
+var superagent = require('superagent');
+var cheerio    = require('cheerio');
+var should     = require('should');
+var dashboards = require('./fixtures/dashboards');
+var dbName     = 'sessionRelatedDB';
+var app        = dashboards.getApp(dbName);
+var utils      = require('./libs/utils');
+var path       = require('path');
+var PATH       = path.join(__dirname, 'fixtures', 'data');
+var can        = require('./fixtures/can')(dbName);
+var fs         = require('fs');
 
 
 describe('session session-related unit test', function () {
@@ -26,6 +27,8 @@ describe('session session-related unit test', function () {
       .get('/set-session')
       .expect(200)
       .end(function (e, res) {
+
+        if (e) { console.error(e); console.log(e.stack);}
 
         should.not.exist(e);
         should(res.text).eql('ok');
@@ -56,7 +59,7 @@ describe('session session-related unit test', function () {
         .post('/sessionRelatedTable/add')
         .field('sessionRelatedTable[title]', 'haha')
         .field('_csrf', csrf)
-        .expect(302)
+        //.expect(302)
         .end(function (e, res) {
 
           if (e) { console.error(e); console.log(e.stack);}
@@ -78,7 +81,7 @@ describe('session session-related unit test', function () {
 
         should(record).be.ok;
         should(record.username).eql('superman');
-        console.log(record);
+        // console.log(record);
         done();
 
       });

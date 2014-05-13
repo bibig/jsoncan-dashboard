@@ -26,19 +26,20 @@ Dashboards.prototype.initApp = function () {
   
   if (this.app) return;
 
-  var express        = require('express');
-  var favicon        = require('serve-favicon');
-  var logger         = require('morgan');
-  var cookieParser   = require('cookie-parser');
-  var bodyParser     = require('body-parser');
-  var session        = require('cookie-session');
-  var multipart      = require('connect-multiparty');
-  // var debug       = require('debug')('app');
-  var csrf           = require('csurf');
+  var express       = require('express');
+  var favicon       = require('serve-favicon');
+  var logger        = require('morgan');
+  var cookieParser  = require('cookie-parser');
+  var bodyParser    = require('body-parser');
+  var session       = require('cookie-session');
+  var multipart     = require('connect-multiparty');
+  // var debug      = require('debug')('app');
+  var shine         = require('shine');
+  var csrf          = require('csurf');
   
-  var swig           = require('swig');
-  // var swigExtras  = require('swig-extras');
-  var app            = express();
+  var swig          = require('swig');
+  // var swigExtras = require('swig-extras');
+  var app           = express();
 
   app.isProduction   = app.get('env') === 'production';
 
@@ -76,6 +77,7 @@ Dashboards.prototype.initApp = function () {
 
   app.use(cookieParser(this.config.cookieSecret));
   app.use(session(this.config.session));
+  app.use(shine());
   app.use(csrf());
   app.use(this.config.staticRoot, express.static(path.join(__dirname, '../public')));
 

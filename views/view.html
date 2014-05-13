@@ -3,6 +3,7 @@
 {% block content %}
     <div class="container">
 			{{ breadcrumbs|safe }}
+      {{ flash|safe }}
       {{ table|safe }}
 			
 			{% if hasManyList %}

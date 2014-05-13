@@ -1,8 +1,7 @@
-exports.bindApp = bindApp;
 exports.getApp = getApp;
 
 var Dashboards = require('../../index');
-var can = require('./can');
+
 var path = require('path');
 var tables = {};
 
@@ -112,7 +111,8 @@ tables.sessionRelatedTable = {
 };
 
 
-function getApp () {
+function getApp (dbName) {
+  var can = require('./can')(dbName);
   var dashboards = new Dashboards(can, {
     mainSiteName: '测试网站',
     logo: '/|xxxx网站|.:navbar-brand|i:eye-open',
@@ -137,20 +137,4 @@ function getApp () {
   
   return dashboards.app;
 
-}
-
-function bindApp (app, mount) {
-  var dashboards;
-  
-  mount = mount || '/admin';
-
-  dashboards = new Dashboards(can, {
-    mount: mount,
-    title: 'admin dashboards'
-  });
-
-  dashboards.add('site', tables.site);
-  dashboards.addIndexPage();
-  
-  app.use(mount, dashboards.app);
 }

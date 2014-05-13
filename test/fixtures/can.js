@@ -1,4 +1,6 @@
 
+module.exports = create;
+
 var Jsoncan = require('jsoncan');
 var path = require('path');
 
@@ -224,4 +226,7 @@ var tables = {
   }
 };
 
-module.exports = new Jsoncan(path.join(__dirname, 'data'), tables);
+function create (name) {
+  return new Jsoncan(path.join(__dirname, name), tables);
+}
+

@@ -49,6 +49,8 @@ function Controller (dashboards, name) {
   this.Table           = dashboards.can.open(name);
   this.settings        = dashboards.tables[name];
   this.mount           = dashboards.config.viewMount;
+  this.staticRoot      = dashboards.config.staticRoot;
+  this.messages        = dashboards.config.messages;
   this.schemas         = Schemas.create(this.Table.getFields());
   this.routes          = Routes.create(this.mount, name);
   this.views           = Views.create(this);
@@ -87,6 +89,7 @@ Controller.prototype.setActionConfig = function (name, defaults) {
   defaults = defaults || {
     tableName  : this.tableName,
     mount      : this.mount,
+    staticRoot : this.staticRoot,
     routes     : this.routes, // should remove
     schemas    : this.schemas, // should remove
     showFields : this.schemas.inputFields(),
@@ -243,7 +246,7 @@ Controller.prototype.isAvailableForAdd = function () {
 
 Controller.prototype.listActionRenderDropdownStep = function () {
   var config = this.settings.list;
-  var self = this;
+  var self   = this;
   
   if ( ! config.dropdown ) { return false; }
   
@@ -398,6 +401,7 @@ Controller.prototype.listActionFinalStep = function () {
     locals.list  = self.middlewaresData.list.mainTable || '';
     locals.pages = self.middlewaresData.list.pagination || '';
     locals.title = helpers.list.renderTitle(self.views.viewTitle('list'), addLink, self.middlewaresData.list.queryDropdown || '');
+    locals.flash = req.shine();
 
     self.views.render(res, 'list', locals);
   };
@@ -420,8 +424,8 @@ Controller.prototype.viewAction = function () {
       var hasManyRoutes;
 
       config.hasAddAction    = self.hasAddAction ? self.isAvailableForAdd() : false;
-      config.hasEditAction   = !config.readonly ? self.hasEditAction : false;
-      config.hasDeleteAction = !config.readonly ? self.hasDeleteAction : false;
+      config.hasEditAction   = ! config.readonly ? self.hasEditAction : false;
+      config.hasDeleteAction = ! config.readonly ? self.hasDeleteAction : false;
       
       if (config.hasMany) {
         config.hasMany.routes   = Routes.create(self.mount, config.hasMany.table);
@@ -431,10 +435,12 @@ Controller.prototype.viewAction = function () {
       
       config.token = self.csrfToken(req);
       locals.table = helpers.view.render(record, config);
+      locals.flash = req.shine();
+
       self.views.render(res, 'view', locals);
     } // end of function
     
-    if (!_id) {
+    if (! _id) {
       query = self.Table.query().limit(1); // for only one record table
     } else {
       query = self.Table.finder(_id);
@@ -461,7 +467,8 @@ Controller.prototype.viewAction = function () {
         if (Array.isArray(record)) {
           record = record[0] || {};
           _id = record._id;
-          if (!_id) {
+
+          if (! _id) {
             res.redirect(self.routes.addRoute());
           }
         }
@@ -529,7 +536,7 @@ Controller.prototype.uploadAction = function () {
                   next(e);
                 } else {
                   // delete old image files
-                  console.log('ready to delete old files');
+                  // console.log('ready to delete old files');
                   self.schemas.deleteFiles(record, upload.data, function (e) {
                     if (e) {
                       next(e);
@@ -676,6 +683,9 @@ Controller.prototype.saveAction = function () {
           
             if (isNew) {
               self.incrementRecordCount();
+              req.shine('success', self.messages['success-add']);
+            } else {
+              req.shine('success', self.messages['success-edit']);
             }
 
             if (self.hasViewAction) {
@@ -780,6 +790,7 @@ Controller.prototype.deleteAction = function () {
           if (e) {
             res.json(500, { error: e.message });
           } else {
+            req.shine('success', self.messages['success-delete']);
             res.json({ redirect: self.routes.rootRoute() });
           }
 

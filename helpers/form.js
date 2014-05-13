@@ -4,7 +4,8 @@ exports.render = render;
 var inputs = require('./inputs');
 var grids  = require('./grids');
 var Html   = require('htmler');
-var yi  = require('yi');
+var path   = require('path');
+var yi     = require('yi');
 
 /**
  * [render description]
@@ -121,7 +122,7 @@ function render (tableName, config) {
   scriptHtmls = Html.script().html('$(function () { jd.onlySubmitOnce("jdb-form", "jdb-submit"); });');
   
   if (richTexts.length > 0) {
-    scriptHtmls += Html.script().html('$(function () { jd.richText("' + richTexts.join(',') + '", "' + config.mount + '") });');
+    scriptHtmls += Html.script().html('$(function () { jd.richText("' + richTexts.join(',') + '", "' + path.join(config.mount, config.staticRoot) + '") });');
   }
   
   return Html.form(formProperties).html(inputHtmls, extraHtmls) + scriptHtmls;

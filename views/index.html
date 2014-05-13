@@ -1,8 +1,9 @@
 {% extends './layout.html' %}
-{% set pageTitle = "后台管理" %}
+{% set pageTitle = title %}
 
 {% block content %}
 	<div class="container">
+    {{ flash|safe }}
 		{{ list|safe }}
   </div>
 {% endblock %}

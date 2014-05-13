@@ -4,19 +4,19 @@ var path = require('path');
 var yi   = require('yi');
 
 var Config = {
-    mount       : '',
-    viewMount   : '',  // important, for static source url
-    staticRoot  : '/dashboards-assets',  // the route app serve the static files
+  mount       : '',
+  viewMount   : '',  // important, for static source url
+  staticRoot  : '/dashboards-assets',  // the route app serve the static files
 
-    cookieSecret : 'dashboards',
-    session: {
-      keys   : ['jsoncan', 'dashboards'],
-      maxAge : 60 * 60 * 1000
-    }, 
+  cookieSecret : 'dashboards',
+  session: {
+    keys   : ['jsoncan', 'dashboards'],
+    maxAge : 60 * 60 * 1000
+  }, 
 
-    title       : 'dashboards',
-    favicon     : path.join(__dirname, './public/images/favicon.ico'),
-    javascripts : {
+  title       : 'dashboards',
+  favicon     : path.join(__dirname, './public/images/favicon.ico'),
+  javascripts : {
     jquery    : '//ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.0.min.js',
     tinymce   : '//tinymce.cachefly.net/4.0/tinymce.min.js',
     bootstrap : '//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js',
@@ -25,6 +25,11 @@ var Config = {
   stylesheets : {
     bootstrap : '//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css',
     fa        : '//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css'
+  },
+  messages: {
+    'success-delete' : '成功删除一条记录',
+    'success-add'    : '成功新增一条记录',
+    'success-edit'   : '成功修改记录'
   }  
 };
 

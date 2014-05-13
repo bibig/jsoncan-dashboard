@@ -1,14 +1,15 @@
-var request       = require('supertest');
-var superagent    = require('superagent');
-var cheerio       = require('cheerio');
-var should        = require('should');
-var dashboards    = require('./fixtures/dashboards');
-var app           = dashboards.getApp();
-var utils         = require('./libs/utils');
-var path          = require('path');
-var PATH          = path.join(__dirname, 'fixtures', 'data');
-var can           = require('./fixtures/can');
-var fs            = require('fs');
+var request    = require('supertest');
+var superagent = require('superagent');
+var cheerio    = require('cheerio');
+var should     = require('should');
+var dashboards = require('./fixtures/dashboards');
+var dbName     = 'data';
+var app        = dashboards.getApp(dbName);
+var utils      = require('./libs/utils');
+var path       = require('path');
+var PATH       = path.join(__dirname, 'fixtures', 'data');
+var can        = require('./fixtures/can')(dbName);
+var fs         = require('fs');
 
 var uploadTmpPath = path.join(__dirname, '../tmp');
 
