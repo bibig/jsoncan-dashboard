@@ -5,6 +5,7 @@ var path       = require('path');
 var Controller = require('./controller');
 var yi         = require('yi');
 var Config     = require('../config');
+var Glory      = require('glory');
 
 function Dashboards (can, settings, tables) {
   this.can = can;
@@ -24,75 +25,17 @@ function Dashboards (can, settings, tables) {
  */
 Dashboards.prototype.initApp = function () {
   
-  if (this.app) return;
+  if (this.glory) return;
 
-  var express       = require('express');
-  var favicon       = require('serve-favicon');
-  var logger        = require('morgan');
-  var cookieParser  = require('cookie-parser');
-  var bodyParser    = require('body-parser');
-  var session       = require('cookie-session');
-  var multipart     = require('connect-multiparty');
-  // var debug      = require('debug')('app');
-  var shine         = require('shine');
-  var csrf          = require('csurf');
-  
-  var swig          = require('swig');
-  // var swigExtras = require('swig-extras');
-  var app           = express();
-
-  app.isProduction   = app.get('env') === 'production';
-
-  // swigExtras.useFilter(swig, 'nl2br');
-
-  app.engine('html', swig.renderFile);
-  app.set('view engine', 'html');
-  app.set('views', path.join(__dirname, '../views'));
-
-  if ( ! app.isProduction ) {
-    app.set('view cache', false);
-    swig.setDefaults({ cache: false });
-  }
-  
-  // view engine setup
-  // app.set('views', path.join(__dirname, 'views'));
-  // app.set('view engine', 'jade');
-
-
-  app.use(favicon(this.config.favicon));
-  app.use(logger('dev'));
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded());
-
-  app.use(multipart({
-    maxFilesSize: 20 * 1024 * 1024,
-    uploadDir: path.join(__dirname, '../public/uploads')
-  }));
-
-  /*
-   app.use(require('stylus').middleware({
-     src:__dirname + '/public',
-     compress: (app.isProduction ? true : false),
-     force: (app.isProduction ?  false : true)
-   }));
-  */
-  app.use(cookieParser(this.config.cookieSecret));
-  app.use(session(this.config.session));
-  app.use(shine());
-  app.use(csrf());
-  app.use(this.config.staticRoot, express.static(path.join(__dirname, '../public')));
-
-  yi.merge(app.locals, this.config);
-
-  this.app = app;
+  this.glory = Glory(this.config);
+  yi.merge(this.glory.app.locals, this.config);
+  this.app = this.glory.app;
 };
 
 Dashboards.prototype.initErrorHandler = function () {
-  var tailbone = require('tailbone').create({
+  this.glory.tail({
     viewMount: this.config.viewMount
   });
-
-  tailbone.enable(this.app);
 };
 
 /**
@@ -108,7 +51,6 @@ Dashboards.prototype.addAll =  function () {
   if (names.length === 0) { return; }
 
   names.forEach(function (name) {
-    // console.log('ready to add %s', name);
     Controller.create(self, name).enable();
   });
 };

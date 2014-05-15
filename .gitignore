@@ -1,6 +1,7 @@
 *.log
 node_modules
 public/uploads
+public/stylesheets/base.css
 test/fixtures/uploads
 test/fixtures/data
 test/fixtures/sessionRelatedDB

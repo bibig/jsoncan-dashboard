@@ -1,8 +1,17 @@
-var mainApp    = require('express')();
+var glory = require('glory')({
+  tailbone: {
+    header: '<center>please access: <a href="/admin">dashboards</a></center>'
+  },
+  port: {
+    dev: 4000
+  }
+});
 var dashboards = require('./dashboards');
 var mount      = '/admin';
 var app        = dashboards.getApp(mount);
 
-mainApp.use(mount, app);
+glory.app.use(mount, app);
 
-mainApp.listen(4000);
+glory.ready(function () {
+  console.log('listen on %s', glory.app.get('port'));
+});

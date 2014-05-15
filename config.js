@@ -4,9 +4,21 @@ var path = require('path');
 var yi   = require('yi');
 
 var Config = {
+
+  views      : path.join(__dirname, './views'),
+  staticRoot : '/dashboards-assets',  // the route app serve the static files
+  staticPath : path.join(__dirname, './public'),
+  
+  csrf       : true,
+
+  multipart: {
+    maxFilesSize : 20 * 1024 * 1024,
+    uploadDir    : path.join(__dirname, './tmp')
+  },
+
   mount       : '',
   viewMount   : '',  // important, for static source url
-  staticRoot  : '/dashboards-assets',  // the route app serve the static files
+  
 
   cookieSecret : 'dashboards',
   session: {
@@ -48,7 +60,7 @@ function create (settings) {
   }
 
   if ( ! config.stylesheets.base ) {
-    config.stylesheets.base = path.join(config.viewMount, config.staticRoot, '/stylesheets/admin.css');  
+    config.stylesheets.base = path.join(config.viewMount, config.staticRoot, '/stylesheets/base.css');  
   }
   
   if ( ! config.mainToolbars ) {
