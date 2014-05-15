@@ -1,7 +1,7 @@
 {
   "name"        : "jsoncan-dashboard",
   "author"      : "Bibig <bibig@me.com> (https://twitter.com/bibig)",
-  "version"     : "0.1.2",
+  "version"     : "0.1.3",
   "description" : "an admin module for express apps backed by jsoncan",
   "main"        : "index.js",
   "scripts"     : {
@@ -20,20 +20,20 @@
     "swig"               : "*",
     "swig-extras"        : "*",
     "jade"               : "*",
-    "jsoncan"            : "^1.1.11",
-    "yi"                 : "^0.0.3",
-    "bootstrap-helper"   : "^0.0.1",
-    "eventchain"         : "^0.0.2",
+    "jsoncan"            : "*",
+    "yi"                 : "*",
+    "bootstrap-helper"   : "*",
+    "eventchain"         : "*",
     "jade"               : "*",
     "rander"             : "*",
-    "htmler"             : "^0.0.5",
+    "htmler"             : "*",
     "gm"                 : "*",
     "async"              : "*",
     "inflection"         : "*",
     "debug"              : "*",
     "sanitizer"          : "*",
     "shine"              : "*",
-    "tailbone"           : "^0.0.2"
+    "tailbone"           : "*"
   },
   "devDependencies": {
     "supertest"  : "*",
