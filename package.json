@@ -1,25 +1,25 @@
 {
   "name"        : "jsoncan-dashboard",
   "author"      : "Bibig <bibig@me.com> (https://twitter.com/bibig)",
-  "version"     : "0.1.4",
+  "version"     : "0.1.5",
   "description" : "an admin module for express apps backed by jsoncan",
   "main"        : "index.js",
   "scripts"     : {
     "test": "mocha -w"
   },
   "dependencies": {
-    "glory"              : ">= 0.0.2",
-    "jsoncan"            : "*",
-    "yi"                 : ">= 0.0.6",
-    "bootstrap-helper"   : "*",
-    "eventchain"         : "*",
-    "rander"             : "*",
-    "htmler"             : "*",
-    "gm"                 : "*",
-    "async"              : "*",
-    "inflection"         : "*",
-    "debug"              : "*",
-    "sanitizer"          : "*"
+    "glory"            : ">= 0.0.2",
+    "jsoncan"          : "^1.1.14",
+    "yi"               : ">= 0.0.6",
+    "bootstrap-helper" : "*",
+    "eventchain"       : "*",
+    "rander"           : "*",
+    "htmler"           : "*",
+    "gm"               : "*",
+    "async"            : "*",
+    "inflection"       : "*",
+    "debug"            : "*",
+    "sanitizer"        : "*"
   },
   "devDependencies": {
     "supertest"  : "*",
@@ -33,5 +33,5 @@
     "type" : "git",
     "url"  : "https://github.com/bibig/node-jsoncan-dashboard.git"
   },
-  "license": "BSD-2-Clause"
+  "license": "MIT"
 }
