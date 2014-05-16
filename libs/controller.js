@@ -69,8 +69,9 @@ function Controller (dashboards, name) {
   this.hasEditAction   = this.settings.edit ? true : false;
   this.hasDeleteAction = this.settings.delete ? true : false;
   this.defaultAction   = this.settings.basic.defaultAction || 'list'; 
-  
-  if (this.settings.max) {
+  this.max             = this.settings.basic.max;
+
+  if (this.max) {
     this.setRecordCount();
   }
 }
@@ -164,7 +165,7 @@ Controller.prototype.enableAddAction = function () {
   
   if ( ! this.hasAddAction ) { return; }
     
-  if (this.settings.max) { 
+  if (this.max) { 
     middlewares.push(this.checkMaxAction()); 
   }
   
@@ -223,21 +224,21 @@ Controller.prototype.setRecordCount = function () {
 };
 
 Controller.prototype.incrementRecordCount = function () {
-  if (this.settings.max) {
+  if (this.max) {
     this.recordCount++;
   }
 };
 
 Controller.prototype.decrementRecordCount = function () {
-  if (this.settings.max) {
+  if (this.max) {
     this.recordCount--;
   }
 };
 
 Controller.prototype.isAvailableForAdd = function () {
-  if (this.settings.max) {
+  if (this.max) {
     // return this.config.all.max > this.Table.countSync();
-    return this.settings.max > this.recordCount;
+    return this.max > this.recordCount;
   }
   return true;
 };
