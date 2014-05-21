@@ -248,7 +248,7 @@ Controller.prototype.isAvailableForAdd = function () {
 Controller.prototype.listActionRenderDropdownStep = function () {
   var config = this.settings.list;
   var self   = this;
-  
+
   if ( ! config.dropdown ) { return false; }
   
   return function (req, res, next) {
@@ -280,7 +280,7 @@ Controller.prototype.listActionRenderDropdownStep = function () {
 
       return records;
     }; // end of schemaValuesToRecords
-        
+
     if (info.length == 1) { // map or array field
       schemaDefinedValues = self.schemas.getField(info[0], 'values');
       queryConfig.textField = info[0];
@@ -463,6 +463,9 @@ Controller.prototype.viewAction = function () {
       
       if (e) {
         next(e);
+      } else if (! record ) {
+        req.shine('error', self.messages['no-data-found']);
+        res.redirect(self.routes.rootRoute());
       } else {
 
         if (Array.isArray(record)) {

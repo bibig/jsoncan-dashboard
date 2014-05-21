@@ -179,7 +179,7 @@ var tables = {
       inputType: 'file',
       inputHelp: 'Please upload images under 4m',
       isImage: true,
-      path: path.join(__dirname, './uploads/articles'), 
+      path: path.join(__dirname, './public/uploads/articles'), 
       url: '/uploads/articles/',
       maxFileSize: 70000,
       exts: ['jpg', 'jpeg', 'gif', 'png'],
@@ -226,7 +226,7 @@ var tables = {
   }
 };
 
-function create (name) {
-  return new Jsoncan(path.join(__dirname, name), tables);
+function create (path) {
+  return new Jsoncan(path, tables);
 }
 

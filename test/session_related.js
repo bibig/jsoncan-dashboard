@@ -4,12 +4,11 @@ var superagent = require('superagent');
 var cheerio    = require('cheerio');
 var should     = require('should');
 var dashboards = require('./fixtures/dashboards');
-var dbName     = 'sessionRelatedDB';
-var app        = dashboards.getApp(dbName);
 var utils      = require('./libs/utils');
 var path       = require('path');
-var PATH       = path.join(__dirname, 'fixtures', 'data');
-var can        = require('./fixtures/can')(dbName);
+var PATH       = path.join(__dirname, './fixtures/db/sessionRelatedDB');
+var can        = require('./fixtures/can')(PATH);
+var app        = dashboards.getApp(can);
 var fs         = require('fs');
 
 

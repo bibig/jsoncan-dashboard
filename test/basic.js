@@ -3,15 +3,14 @@ var superagent = require('superagent');
 var cheerio    = require('cheerio');
 var should     = require('should');
 var dashboards = require('./fixtures/dashboards');
-var dbName     = 'data';
-var app        = dashboards.getApp(dbName);
 var utils      = require('./libs/utils');
 var path       = require('path');
-var PATH       = path.join(__dirname, 'fixtures', 'data');
-var can        = require('./fixtures/can')(dbName);
+var PATH       = path.join(__dirname, 'fixtures/db/data');
+var can        = require('./fixtures/can')(PATH);
+var app        = dashboards.getApp(can);
 var fs         = require('fs');
 
-var uploadTmpPath = path.join(__dirname, '../tmp');
+var uploadTmpPath = path.join(__dirname, './fixtures/tmp');
 
 
 describe('<basic test>', function () {
@@ -137,6 +136,7 @@ describe('<basic test>', function () {
           done();
         });
     });
+
   }); // end of describe
 
   describe('test for table articleCategories', function () {
@@ -198,6 +198,22 @@ describe('<basic test>', function () {
       agent
         .get(location)
         .expect(200, done);
+    });
+
+    it('access none exist view page', function (done) {
+      agent
+        .get('/articles/view/none-exist')
+        .expect(302)
+        .end(function (e, res) {
+
+          if (e) { console.error(e); console.log(e.stack);}
+          
+          should.not.exist(e);
+          // console.log(res.headers);
+          // console.log(res.text);
+          res.headers.location.should.equal('/articles');
+          done();
+        });
     });
 
   }); // end of describe
@@ -295,7 +311,7 @@ describe('<basic test>', function () {
       memo: 'this is a memo',
       seq: '1'
     };
-    var imageLocalPath = path.join(__dirname, './fixtures/uploads/articles');
+    var imageLocalPath = path.join(__dirname, './fixtures/public/uploads/articles');
 
     this.timeout(5000);
 
@@ -328,7 +344,7 @@ describe('<basic test>', function () {
     });
 
     it('post /articleImages/add, when form validate failed, should clear uploaded image', function (done) {
-      var imagesPath = path.join(__dirname, './fixtures/uploads/articles');
+      var imagesPath = path.join(__dirname, './fixtures/public/uploads/articles');
       var thumbsPath = path.join(imagesPath, './thumbs');
 
       agent

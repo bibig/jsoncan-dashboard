@@ -2,9 +2,9 @@
 node_modules
 public/uploads
 public/stylesheets/base.css
-test/fixtures/uploads
-test/fixtures/data
-test/fixtures/sessionRelatedDB
+test/fixtures/public
+test/fixtures/db/*
 test/fixtures/tmp/*
 examples/data
+examples/public
 tmp/*

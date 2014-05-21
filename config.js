@@ -4,11 +4,8 @@ var path = require('path');
 var yi   = require('yi');
 
 var Config = {
-
-  views      : path.join(__dirname, './views'),
+  path       : __dirname,
   staticRoot : '/dashboards-assets',  // the route app serve the static files
-  staticPath : path.join(__dirname, './public'),
-  
   csrf       : true,
 
   multipart: {
@@ -41,7 +38,8 @@ var Config = {
   messages: {
     'success-delete' : '成功删除一条记录',
     'success-add'    : '成功新增一条记录',
-    'success-edit'   : '成功修改记录'
+    'success-edit'   : '成功修改记录',
+    'no-data-found'  : '数据不存在'
   }  
 };
 

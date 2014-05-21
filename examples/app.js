@@ -1,5 +1,6 @@
 var glory = require('glory')({
-  tailbone: {
+  path       : __dirname,
+  tailbone   : {
     header: '<center>please access: <a href="/admin">dashboards</a></center>'
   },
   port: {

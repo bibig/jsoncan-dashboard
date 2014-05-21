@@ -111,18 +111,20 @@ tables.sessionRelatedTable = {
 };
 
 
-function getApp (dbName) {
-  var can = require('./can')(dbName);
+function getApp (can) {
   var dashboards = new Dashboards(can, {
-    mainSiteName: '测试网站',
-    logo: '/|xxxx网站|.:navbar-brand|i:eye-open',
-    mainToolbars: [
+    mainSiteName  : '测试网站',
+    logo          : '/|xxxx网站|.:navbar-brand|i:eye-open',
+    footbars      : ['测试网站, 权利所有'],
+    rightToolbars : ['/logout|i:off|退出'],
+    mainToolbars  : [
       '/|i:th|dashboards',
       'http://www.apple.com|i:fa-bolt|apple', 
       'http://www.google.com|i:@|google'
     ],
-    rightToolbars: ['/logout|i:off|退出'],
-    footbars: ['测试网站, 权利所有']
+    multipart: {
+      uploadDir    : path.join(__dirname, './tmp')
+    }
   }, tables);
 
   // dashboards.add('site', tables.site);
