@@ -113,7 +113,7 @@ Schemas.prototype.getFileFields = function (whiteList) {
 
   this.forEachField(function (name, field) {
     if (field.inputType == 'file') {
-      files[name] = yi.filter(field, ['isImage', 'path', 'maxFileSize', 'exts', 'sizeField', 'cropImage', 'isFixedSize', 'imageSize', 'thumbs', 'thumbSize', 'thumbPath']);
+      files[name] = yi.filter(field, ['required', 'isRequired', 'isImage', 'path', 'maxFileSize', 'exts', 'sizeField', 'cropImage', 'isFixedSize', 'imageSize', 'thumbs', 'thumbPath']);
     }
   }, whiteList);
 

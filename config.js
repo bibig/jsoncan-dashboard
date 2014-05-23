@@ -8,6 +8,7 @@ var Config = {
   staticRoot : '/dashboards-assets',  // the route app serve the static files
   csrf       : true,
   stylus     : true,
+  shine      : 5,
 
   multipart: {
     maxFilesSize : 20 * 1024 * 1024,
