@@ -39,7 +39,7 @@ function renderTable (records, config) {
   }, Present.getFieldNames(config.showFields));
 
   if (!config.readonly) {
-    tableHeadHtml += th().html('操作');
+    tableHeadHtml += th({style: 'width: 150px'}).html('操作');
   }
 
   tableHeadHtml = tr().html(tableHeadHtml);
@@ -151,7 +151,7 @@ function renderAddLink (url, text) {
     cls += ' disabled';
   }
 
-  return Present.addLink(url, true, cls);
+  return Present.addLink(url, text, true, cls);
 }
 
 function renderTitle (title, addLink, queryDropdown) {

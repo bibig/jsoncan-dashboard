@@ -17,6 +17,7 @@ function create (config, record) {
 
 function Present (config, record) {
   
+  this.texts           = config.texts;
   this.routes          = config.routes;
   this.schemas         = config.schemas;
   this.showFields      = config.showFields;
@@ -47,7 +48,7 @@ function getFieldName (name) {
 
 Present.prototype.showAll = function (fields) {
   var presents = [];
-  var self = this;
+  var self     = this;
   
   fields = fields || this.showFields;
   
@@ -59,15 +60,16 @@ Present.prototype.showAll = function (fields) {
 }; 
 
 /**
- * show('image|thumb|link', {}, schemas)
+ * show('avatar|thumb|link')
  */
 Present.prototype.show = function (name) {
-  var types = name.split('|');
-  var baseInfo = types.shift().split('.');
-  var fieldName = baseInfo[0];
+  var types        = name.split('|');
+  var baseInfo     = types.shift().split('.');
+  var fieldName    = baseInfo[0];
   var refFieldName = baseInfo[1];
-  var present = this.record[fieldName];
-  var self = this;
+  var present      = this.record[fieldName];
+  var self         = this;
+  var typeInfo;
   
   if ( ! present ) { return ''; }
 
@@ -85,12 +87,17 @@ Present.prototype.show = function (name) {
 
   types.forEach(function (type) {
 
-    switch (type) {
+    typeInfo = type.split('_');
+
+    switch (typeInfo[0]) {
       case 'image':
         present = self.image(fieldName);
         break;
-      case 'thumb':
-        present = self.thumb(fieldName);
+      case 'thumb': // thumb_100x100
+        present = self.thumb(fieldName, typeInfo[1]);
+        break;
+      case 'thumbs':
+        present = Html.div('thumbnails-box').html(self.thumbs(fieldName).join(''));
         break;
       case 'strong':
         present = self.strong(fieldName);
@@ -104,6 +111,23 @@ Present.prototype.show = function (name) {
   return present;
 };
 
+Present.prototype.getFieldText = function (name) {
+  var types     = name.split('|');
+  var fieldName = getFieldName(name);
+  var field     = this.schemas.getField(fieldName);
+  var text      = field.text || field.name;
+
+  if (types.length === 1) {
+    return text;
+  }
+
+  if (types[1] == 'thumb' || types[1] == 'thumbs') {
+    return text + '(' + this.texts.thumb + ')';
+  }
+
+  return text;
+};
+
 Present.prototype.getFieldName = getFieldName;
 
 Present.prototype.image = function (name) {
@@ -113,11 +137,23 @@ Present.prototype.image = function (name) {
   return Html.img({src: src});
 };
 
-Present.prototype.thumb = function (name) {
+Present.prototype.thumb = function (name, size) {
   var filename = this.record[name];
-  var src = this.schemas.thumbSrc(name, filename);
+  var src = this.schemas.thumbSrc(name, filename, size);
 
   return Html.img({src: src});
+};
+
+Present.prototype.thumbs = function (name) {
+  var filename = this.record[name];
+  var list = this.schemas.allThumbs(name, filename) || [];
+  var images = [];
+
+  list.forEach(function (thumb) {
+    images.push(Html.img({src: thumb.src}));
+  });
+
+  return images;
 };
 
 Present.prototype.link = function (name, text) {
@@ -141,8 +177,8 @@ Present.prototype.editLink = function (isButton) {
   var prop, text;
   
   if ( ! this.hasEditAction ) { return null; }
-  
-  text = '编辑';
+
+  text = this.texts.edit;
   prop = {
     href: this.routes.editRoute(this.record._id)
   };
@@ -155,12 +191,26 @@ Present.prototype.editLink = function (isButton) {
   return Html.a(prop).html(text);
 };
 
+Present.prototype.uploadLink = function (name, extraText, isButton) {
+  var text = this.texts.upload + extraText;
+  var prop = {
+    href: this.routes.uploadRoute(name, this.record._id)
+  };
+
+  if (isButton) {
+    prop['class'] = 'btn btn-info';
+    text = Html.span('glyphicon glyphicon-cloud-upload').html() + ' ' + text;
+  }
+
+  return Html.a(prop).html(text);
+};
+
 Present.prototype.deleteLink = function (isButton) {
   var prop, text;
   
   if ( ! this.hasDeleteAction ) { return null; }
   
-  text = '删除';
+  text = this.texts.delete;
   prop = {
     href: '#',
     onclick: 'jd.del(\'' + this.routes.deleteRoute(this.record._id) + '\');'
@@ -187,12 +237,11 @@ Present.prototype.addLink = function (isButton, extraClass) {
 
   });
   
-  return addLink(this.routes.addRoute(q), isButton, extraClass);
+  return addLink(this.routes.addRoute(q), this.texts.add, isButton, extraClass);
 };
 
 
-function addLink (url, isButton, extraClass) {
-  var text = '新增';
+function addLink (url, text, isButton, extraClass) {
   var prop = {
     href: url
   };
@@ -209,7 +258,7 @@ function addLink (url, isButton, extraClass) {
 Present.prototype.viewLink = function (text) {
   if (this.hasViewAction) { return null; }
   
-  return Html.a({href: this.routes.viewRoute(this.record._id)}).html(text || '查看');
+  return Html.a({href: this.routes.viewRoute(this.record._id)}).html(text || this.texts.view);
 };
 
 Present.prototype.refViewLink = function (name, text) {

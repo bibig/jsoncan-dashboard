@@ -15,6 +15,7 @@ function create (controller) {
 ///////////////////////
 
 function Views (controller) {
+  this.texts = controller.texts;
   this.controller = controller;
 }
 
@@ -41,6 +42,7 @@ Views.prototype.getDefaultViewName = function (name) {
   
   switch (name) {
     case 'add':
+    case 'upload':
       return 'edit.html';
     default:
       return name + '.html';
@@ -48,7 +50,7 @@ Views.prototype.getDefaultViewName = function (name) {
 
 };
 
-Views.prototype.render = function (res, name, locals) {
+Views.prototype.render = function (res, name, locals, _id) {
   var title = this.viewTitle(name);
   var layers = [];
   
@@ -63,6 +65,10 @@ Views.prototype.render = function (res, name, locals) {
 	  if (this.controller.hasListAction) {
 	    layers.push([this.controller.routes.listRoute(), this.viewTitle('list')]);
 	  }
+
+    if (name == 'upload' || name == 'edit') {
+     layers.push([this.controller.routes.viewRoute(_id), this.viewTitle('view')]); 
+    }
 
 	  layers.push(title);
 	}
@@ -84,13 +90,15 @@ Views.prototype.viewTitle = function (name) {
 
   switch (name) {
     case 'view':
-      return '浏览' + modelTitle;
+      return this.texts.browser + modelTitle;
     case 'add':
-      return '新增' + modelTitle;
+      return this.texts.add;
     case 'edit':
-      return '编辑' + modelTitle;
+      return this.texts.edit;
+    case 'upload':
+      return this.texts.upload_file;
     case 'list':
-      return modelTitle + '清单';
+      return modelTitle + this.texts.list;
     default:
       return null;
   }

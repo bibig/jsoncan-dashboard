@@ -17,6 +17,16 @@ function fileExt (filename) {
   return info[info.length - 1];
 }
 
+function getThumbFilename (imageFile, size) {
+  var info;
+
+  if ( ! size ) { return imageFile; }
+
+  info = imageFile.split('.');
+
+  return info[0] + '_' + size + '.' + info[1];
+}
+
 /* ------------Schemas construction-------------- */
 
 function Schemas  (fields) {
@@ -33,6 +43,29 @@ Schemas.prototype.inputFields = function () {
   });
 
   return list;
+};
+
+// none file type
+Schemas.prototype.noFileInputFields = function () {
+  var list = [];
+
+  this.forEachField(function (name, field) {
+    list.push(name);
+  }, function (name, field) {
+    return field.isInput && field.inputType != 'file';
+  });
+
+  return list;
+};
+
+Schemas.prototype.noTextareaInputFields = function () {
+  var list = [];
+
+  this.forEachField(function (name, field) {
+
+  }, function (name, field) {
+    return field.isInput && ['textarea', 'rich_textarea'].indexOf(field.inputType) === -1;
+  });
 };
 
 Schemas.prototype.safeFilters = function (hash) {
@@ -69,6 +102,25 @@ Schemas.prototype.forEachSessionField = function (callback) {
   });
 };
 
+Schemas.prototype.forEachFileField = function (callback) {
+  this.forEachField(callback, function (name, field) {
+    return field.inputType == 'file';
+  });
+};
+
+Schemas.prototype.getFileFields = function (whiteList) {
+  var files = {};
+
+  this.forEachField(function (name, field) {
+    if (field.inputType == 'file') {
+      files[name] = yi.filter(field, ['isImage', 'path', 'maxFileSize', 'exts', 'sizeField', 'cropImage', 'isFixedSize', 'imageSize', 'thumbs', 'thumbSize', 'thumbPath']);
+    }
+  }, whiteList);
+
+  return files;
+};
+
+
 Schemas.prototype.getFileRelatedData = function (record) {
   var data = {};
 
@@ -100,24 +152,32 @@ Schemas.prototype.imageSrc = function (name, value) {
   return null;
 };
 
-Schemas.prototype.thumbSrc = function (name, value) {
+// for old version
+Schemas.prototype.thumbSrc = function (name, value, size) {
   var field = this.getField(name);
 
-  if (field.hasThumb) {
-    return path.join(this.thumbUrl(field), value);
-  }
-
-  return null;
+  return path.join(this.thumbUrl(field), getThumbFilename(value, size));
 };
 
-Schemas.prototype.thumbImage = function (name, value) {
-  var field = this.getField(name);
+Schemas.prototype.allThumbs = function (name, value) {
+  var thumbs    = [];
+  var field     = this.getField(name);
+  var thumbUrl  = this.thumbUrl(field);
+  var thumbPath = this.thumbPath(field);
+  var sizes     = field.thumbs;
 
-  if (field.hasThumb) {
-    return Html.img({src: path.join(this.thumbUrl(field), value)});
-  } else {
-    return false;
-  }
+  if ( ! sizes ) { sizes.push(''); }
+
+  sizes.forEach(function (size) {
+    var filename = getThumbFilename(value, size);
+
+    thumbs.push({
+      src: path.join(thumbUrl, filename),
+      file: path.join(thumbPath, filename)
+    });
+  });
+
+  return thumbs;
 };
 
 Schemas.prototype.hasUploadField = function () {
@@ -130,64 +190,6 @@ Schemas.prototype.hasUploadField = function () {
   });
 
   return has;
-};
-
-//@isEditAction: 修改记录时，应该允许不上传文件，因为有可能只是修改其它字段
-Schemas.prototype.checkFile = function (name, file) {
-  var field = this.getField(name);
-  var ext;
-
-  function addSource (s) {
-    return s + ', 源文件: ' + file.originalFilename;
-  }
-  
-  if (file.originalFilename === '') {
-
-    if (field.required || field.isRequired) {
-      return '请上传文件'; 
-    }
-
-    return true;
-  }
-  
-  if (!this.isFileField(field)) {
-    return '未定义此文件字段';
-  }
-  
-  if (field.isImage) {
-
-    if (file.type.split('/')[0] != 'image') {
-      return addSource('不能识别的图片');
-    }
-
-  }
-  
-  ext = fileExt(file.path);
-  
-  if ((field.exts || []).indexOf(ext) == -1) {
-    return addSource('不支持"' + ext + '"文件类型');
-  }
-  
-  if (field.maxFileSize) {
-
-    if (field.maxFileSize < file.size) {
-      return addSource('文件太大, 文件最大限制' + yi.humanSize(field.maxFileSize));
-    }
-
-  }
-
-  return true;
-};
-
-Schemas.prototype.isFileField = function (field) {
-  
-  if (typeof field == 'string') {
-    field = this.getField(field);
-  }
-  
-  if (!field) return false;
-
-  return field.inputType == 'file';
 };
 
 Schemas.prototype.thumbPath = function (field) {
@@ -262,50 +264,26 @@ Schemas.prototype.isReference = function (name) {
 Schemas.prototype.deleteFiles = function (record, changedFields, callback) {
   var self = this;
   var tasks = [];
+  var files = [];
   
+  // find out which files need to delete
   this.forEachField(function (name, field) {
-    
-    if (field.isImage && yi.isNotEmpty(record[name])) {
-      tasks.push(field);
+    var value = record[name];
+
+    if (field.inputType == 'file' && yi.isNotEmpty(value)) {
+      files.push(path.join(field.path, value));
+
+      if (field.thumbs) {
+        self.allThumbs(name, value).forEach(function (thumb) {
+          files.push(thumb.file);
+        });
+      }
+
     }
 
   }, changedFields);
-  
-  function deleteOne (field, callback) {
-    var value = record[field.name];
-    var unlink = function (file, exists, next) {
-    
-      if (exists) {
-        fs.unlink(file, next);
-      } else {
-        next();
-      }
 
-    };
-    
-    async.waterfall([
-      function (next) {
-        var imageFile = path.join(field.path, value);
-
-        fs.exists(imageFile, function (exists) {
-          next(null, imageFile, exists);
-        });
-
-      },
-      unlink,
-      function (next) {
-        var thumbFile = path.join(self.thumbPath(field), value);
-        
-        fs.exists(thumbFile, function (exists) {
-          next(null, thumbFile, exists);
-        });
-
-      },
-      unlink
-    ], callback);
-  } // end of deleteOne
-  
-  async.each(tasks, deleteOne, callback); 
+  async.each(files, fs.unlink, callback);
 };
 
 Schemas.prototype.convert = function (data, showFields) {

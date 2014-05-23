@@ -312,6 +312,7 @@ describe('<basic test>', function () {
       seq: '1'
     };
     var imageLocalPath = path.join(__dirname, './fixtures/public/uploads/articles');
+    var thumbLocalPath = path.join(imageLocalPath, './thumbs');
 
     this.timeout(5000);
 
@@ -344,8 +345,7 @@ describe('<basic test>', function () {
     });
 
     it('post /articleImages/add, when form validate failed, should clear uploaded image', function (done) {
-      var imagesPath = path.join(__dirname, './fixtures/public/uploads/articles');
-      var thumbsPath = path.join(imagesPath, './thumbs');
+      
 
       agent
         .post('/articleImages/add')
@@ -364,8 +364,8 @@ describe('<basic test>', function () {
 
           // console.log(fs.readdirSync(uploadTmpPath));
 
-          should(fs.readdirSync(imagesPath).length).eql(1); // 1 refer to 'thumbs' sub-folder
-          should(fs.readdirSync(thumbsPath).length).eql(0);
+          should(fs.readdirSync(imageLocalPath).length).eql(1); // 1 refer to 'thumbs' sub-folder
+          should(fs.readdirSync(thumbLocalPath).length).eql(0);
           should(fs.readdirSync(uploadTmpPath).length).eql(0);
           
           // console.log(res.req.files);
@@ -423,6 +423,7 @@ describe('<basic test>', function () {
 
     it('check database and files after add', function () {
       var data = can.open('articleImages').query().execSync()[0];
+      var imageInfo = data.image.split('.');
 
       data.should.have.property('_article', record._article);
       data.should.have.property('seq', record.seq);
@@ -434,7 +435,9 @@ describe('<basic test>', function () {
       data.should.have.property('_id');
 
       fs.existsSync(path.join(imageLocalPath, data.image)).should.be.true;
-      fs.existsSync(path.join(imageLocalPath, 'thumbs', data.image)).should.be.true;
+      fs.existsSync(path.join(thumbLocalPath, imageInfo[0] + '_100x100.' + imageInfo[1])).should.be.true;
+      fs.existsSync(path.join(thumbLocalPath, imageInfo[0] + '_50x50.' + imageInfo[1])).should.be.true;
+      fs.existsSync(path.join(thumbLocalPath, imageInfo[0] + '_29x29.' + imageInfo[1])).should.be.true;
 
       location.should.eql('/articleImages/view/' + data._id);
       record._id = data._id;
@@ -514,11 +517,30 @@ describe('<basic test>', function () {
 
       count.should.eql(0);
 
-      fs.existsSync(path.join(imageLocalPath, record.image)).should.be.false;
-      fs.existsSync(path.join(imageLocalPath, 'thumbs', record.image)).should.be.false;
+      should(fs.readdirSync(imageLocalPath).length).eql(1); // 1 refer to 'thumbs' sub-folder
+      should(fs.readdirSync(thumbLocalPath).length).eql(0);
+      should(fs.readdirSync(uploadTmpPath).length).eql(0);
       // console.log(record);
     });
 
   }); // end of describe
+
+});
+
+describe('clear', function () {
+  var imagesPath = path.join(__dirname, './fixtures/public/uploads/articles');
+  var thumbsPath = path.join(imagesPath, './thumbs');
+
+  it('clear upload tmp files', function (done) {
+    utils.clear(uploadTmpPath + '/*', done);
+  });
+
+  it('clear upload images', function (done) {
+    utils.clear(imagesPath + '/*', done);
+  });
+
+  it('clear thumbs', function (done) {
+    utils.clear(thumbsPath + '/*', done);
+  });
 
 });

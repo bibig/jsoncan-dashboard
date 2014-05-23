@@ -123,7 +123,7 @@ function getApp (can) {
       'http://www.google.com|i:@|google'
     ],
     multipart: {
-      uploadDir    : path.join(__dirname, './tmp')
+      uploadDir: path.join(__dirname, './tmp')
     }
   }, tables);
 

@@ -186,8 +186,9 @@ var tables = {
       // cropImage: 'Center',
       // isFixedSize: true,
       imageSize: [600, 400],
-      thumbSize: [100],
-      hasThumb: true,
+      thumbs: ['150x150', '100x100', '50x50'],
+      // thumbSize: [100],
+      // hasThumb: true,
       thumbPath: false // use default
     },
     size: {

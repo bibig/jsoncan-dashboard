@@ -1,4 +1,4 @@
-exports.create = create;
+exports.create    = create;
 exports.indexPage = indexPage;
 
 
@@ -6,6 +6,7 @@ var yi         = require('yi');
 var inflection = require('inflection');
 var async      = require('async');
 var path       = require('path');
+var Fala       = require('fala');
 var debug      = require('debug')('dashboard');
 
 var helpers    = require('../helpers');
@@ -13,7 +14,6 @@ var Routes     = require('./routes');
 var Views      = require('./views');
 var Schemas    = require('./schemas');
 var Present    = require('./present');
-var Upload     = require('./upload');
 
 
 function indexPage (dashboards) {
@@ -51,6 +51,7 @@ function Controller (dashboards, name) {
   this.mount           = dashboards.config.viewMount;
   this.staticRoot      = dashboards.config.staticRoot;
   this.messages        = dashboards.config.messages;
+  this.texts           = dashboards.config.texts;
   this.schemas         = Schemas.create(this.Table.getFields());
   this.routes          = Routes.create(this.mount, name);
   this.views           = Views.create(this);
@@ -62,6 +63,7 @@ function Controller (dashboards, name) {
   this.setActionConfig('edit'); 
   this.setActionConfig('add');
   this.setActionConfig('delete');
+  this.setActionConfig('upload');
   
   this.hasListAction   = this.settings.list ? true : false;
   this.hasViewAction   = this.settings.view ? true : false;
@@ -93,27 +95,32 @@ Controller.prototype.setActionConfig = function (name, defaults) {
     staticRoot : this.staticRoot,
     routes     : this.routes, // should remove
     schemas    : this.schemas, // should remove
-    showFields : this.schemas.inputFields(),
+    texts      : this.texts,
     locals     : {}
   };
   
   switch (name) {
     case 'view':
       defaults.isFormat = true;
+      defaults.showFields = this.schemas.inputFields();
       break;
     case 'edit':
       defaults.formLayout = this.settings.basic.formLayout;
+      defaults.showFields = this.schemas.noFileInputFields();
       break;
     case 'add':
       defaults.formLayout = this.settings.basic.formLayout;
+      defaults.showFields = this.schemas.inputFields();
       break;
     case 'list':
       defaults.showPage = true;
       defaults.pageSize = 50;
       defaults.filters = {};
       defaults.isFormat = true;
+      defaults.showFields = this.schemas.noTextareaInputFields();
       break;
     case 'delete':
+    case 'upload':
       break;
   }
   
@@ -170,25 +177,44 @@ Controller.prototype.enableAddAction = function () {
   }
   
   if (this.schemas.hasUploadField()) {
-    middlewares.push(this.uploadAction());
+    middlewares.push(Fala({
+      fields: this.schemas.getFileFields()
+    }));
+    // middlewares.push(this.uploadAction());
   }
       
   middlewares.push(this.saveAction());
   this.dashboards.app.all('/' + this.tableName + '/add', middlewares, this.addAction());
 };
 
+/**
+ * enable edit action
+ *
+ * no upload middleware any more @ 2014-05-22 22:15:41
+ * @author bibig@me.com
+ * @return void
+ */
 Controller.prototype.enableEditAction = function () {
-  var middlewares = [];
-  
   if ( ! this.hasEditAction ) { return; }
-    
-  if (this.schemas.hasUploadField()) {
-    middlewares.push(this.uploadAction());
-  }
   
+  this.dashboards.app.all('/' + this.tableName + '/edit/:id', this.saveAction(), this.editAction());
+};
+
+/**
+ * upload action mean upload for a single field
+ * 
+ * @author bibig@me.com
+ * @update [2014-05-23 11:10:50]
+ * @return void
+ */
+Controller.prototype.enableUploadAction = function (name) {
+  var middlewares = [Fala({
+      fields: this.schemas.getFileFields([name])
+    })];
+
+  middlewares.push(this.uploadSaveAction());
   middlewares.push(this.saveAction());
-  
-  this.dashboards.app.all('/' + this.tableName + '/edit/:id', middlewares, this.editAction());
+  this.dashboards.app.all('/' + this.tableName + '/upload/' + name + '/:id', middlewares, this.uploadAction());
 };
 
 Controller.prototype.enableDeleteAction = function () {
@@ -212,11 +238,17 @@ Controller.prototype.enableViewAction = function () {
 };
 
 Controller.prototype.enable = function () {
+  var self = this;
+
   this.enableListAction();
   this.enableViewAction();
   this.enableAddAction();
   this.enableEditAction();
   this.enableDeleteAction();
+
+  this.schemas.forEachFileField(function (name) {
+    self.enableUploadAction(name);
+  });
 };
 
 Controller.prototype.setRecordCount = function () {
@@ -242,8 +274,6 @@ Controller.prototype.isAvailableForAdd = function () {
   }
   return true;
 };
-
-
 
 Controller.prototype.listActionRenderDropdownStep = function () {
   var config = this.settings.list;
@@ -397,7 +427,7 @@ Controller.prototype.listActionFinalStep = function () {
   return function (req, res, next) {
     var locals     = yi.clone(config.locals);
     var addLinkUrl = (self.hasAddAction && self.isAvailableForAdd()) ? self.routes.addRoute(req.query) : false;
-    var addLink    = helpers.list.renderAddLink(addLinkUrl);
+    var addLink    = helpers.list.renderAddLink(addLinkUrl, self.texts.add);
     
     locals.list  = self.middlewaresData.list.mainTable || '';
     locals.pages = self.middlewaresData.list.pagination || '';
@@ -441,7 +471,7 @@ Controller.prototype.viewAction = function () {
       self.views.render(res, 'view', locals);
     } // end of function
     
-    if (! _id) {
+    if ( ! _id) {
       query = self.Table.query().limit(1); // for only one record table
     } else {
       query = self.Table.finder(_id);
@@ -463,7 +493,7 @@ Controller.prototype.viewAction = function () {
       
       if (e) {
         next(e);
-      } else if (! record ) {
+      } else if ( ! record ) {
         req.shine('error', self.messages['no-data-found']);
         res.redirect(self.routes.rootRoute());
       } else {
@@ -471,13 +501,14 @@ Controller.prototype.viewAction = function () {
         if (Array.isArray(record)) {
           record = record[0] || {};
           _id = record._id;
-
-          if (! _id) {
-            res.redirect(self.routes.addRoute());
-          }
         }
 
-        _render(record);
+        if ( ! _id) {
+          res.redirect(self.routes.addRoute());
+        } else {
+          _render(record);  
+        }
+        
       }
 
     }); // end of finder
@@ -496,78 +527,6 @@ Controller.prototype.getSessionData = function (req) {
   });
 
   return data;
-};
-
-Controller.prototype.uploadAction = function () {
-  var self = this;
-  var upload;
-  
-  return function (req, res, next) {
-    var _id = req.params.id, isEdit;
-    
-    if (req.method == 'GET') { return next(); }
-    
-    if (req.files) {
-      upload = new Upload.create(req.files, self.schemas);
-      
-      // 针对此类情况：只想修改非上传文件的字段。比如，只想修改标题，而保持原来的图片。
-      if (upload.noFileUpload() && self.routes.isEditAction(req)) {
-        self.Table.find(_id).exec(function (e, record) {
-          
-          if (e) {
-            next(e);
-          } else {
-            yi.merge(self.getPostData(req), self.schemas.getFileRelatedData(record));
-            next();
-          }
-
-        });
-        return;
-      }
-      
-      if (upload.validate()) {
-        upload.save(function (e) {
-          
-          if (e) {
-            next(e);
-          } else {
-            yi.merge(self.getPostData(req), upload.data);
-
-            if (_id) {// edit mode, should delete old file
-              self.Table.find(_id).exec(function (e, record) {
-                
-                if (e) {
-                  next(e);
-                } else {
-                  // delete old image files
-                  // console.log('ready to delete old files');
-                  self.schemas.deleteFiles(record, upload.data, function (e) {
-                    if (e) {
-                      next(e);
-                    } else {
-                      next();
-                    }
-                  });
-                }
-
-              });
-
-              return;     
-            } else {
-              next();
-            } // end of if (_id)
-          }
-        });
-      } else { // failed validate
-        req.errors = req.errors || {};
-        yi.merge(req.errors, upload.errors);
-        upload.clear(next);
-      } // end of if (upload.validate())
-    } else { // end of if(req.files)
-      next();
-    }
-    
-  };
 };
 
 Controller.prototype.setReferencesValues = function (showFields, callback) {
@@ -673,6 +632,11 @@ Controller.prototype.saveAction = function () {
       } else {
         validFields = self.settings.add.showFields;
       }
+
+      if (req.fala) {
+        yi.merge(data, req.fala.data);
+        yi.merge(req.errors, req.fala.errors);
+      }
       
       data = self.schemas.convert(data, validFields);
       data = self.schemas.sanitize(data);
@@ -715,6 +679,15 @@ Controller.prototype.saveAction = function () {
 
 };
 
+/**
+ * edit action define
+ * when GET: render form
+ * when Post: render form too, if arrived here, mean saveAction failed.
+ * 
+ * @author bibig@me.com
+ * @update [2014-05-23 11:09:05]
+ * @return void
+ */
 Controller.prototype.editAction = function () {
   var self = this;
   var config = this.settings.edit;
@@ -735,7 +708,7 @@ Controller.prototype.editAction = function () {
       config.token  = self.csrfToken(req);
       locals.form   = helpers.form.render(self.Table.table, config);
 
-      self.views.render(res, 'edit', locals);
+      self.views.render(res, 'edit', locals, _id);
     }
     
     if (req.method == 'GET') {
@@ -773,6 +746,85 @@ Controller.prototype.editAction = function () {
   
 };
 
+// only upload for one field
+Controller.prototype.uploadAction = function () {
+  var self = this;
+  var config = this.settings.upload;
+  
+  if (config === false ) { return false; }
+  
+  return function (req, res, next) {
+    var name = getUploadFieldNameFromReq(req);
+    var _id = req.params.id;
+    var locals = yi.clone(config.locals);
+    
+    if ( ! _id || ! name ) {
+      return next(new Error('invalid param found'));
+    }
+    
+    function renderForm () {
+      config.errors     = req.errors || {};
+      config.action     = self.routes.uploadRoute(name, _id);
+      config.token      = self.csrfToken(req);
+      config.showFields = [name];
+      config.formLayout = [name];
+      locals.form       = helpers.form.render(self.Table.table, config);
+
+      self.views.render(res, 'upload', locals, _id);
+    }
+    
+    if (req.method == 'GET') {
+
+      self.Table.find(_id).select(name).exec(function (e, record) {
+      
+        if (e) {
+          next(e);
+        } else if ( ! record ) {
+          next(new Error('no data found!'));
+        } else {
+          renderForm();
+        }
+
+      });
+
+    } else {
+      renderForm();
+    }
+  }; // end of return
+};
+
+Controller.prototype.uploadSaveAction = function () {
+  var self = this;
+  
+  return function (req, res, next) {
+    var _id  = req.params.id;
+    var name = getUploadFieldNameFromReq(req);
+    
+    if (req.method == 'GET') { return next(); }
+    
+    if (req.fala) {
+      
+      if (yi.isNotEmpty(req.fala.errors)) {
+        return next();
+      }
+
+      async.waterfall([
+        // find the record
+        function (callback) {
+          self.Table.find(_id).select(name).exec(callback);
+        },
+        // delete old uploaded files
+        function (record, callback) {
+          self.schemas.deleteFiles(record, [name], callback);
+        }
+      ], next);
+    } else {
+      next();
+    }
+  };
+
+};
+
 // should use delete method
 Controller.prototype.deleteAction = function () {
   var self = this;
@@ -804,3 +856,9 @@ Controller.prototype.deleteAction = function () {
     });
   };
 }; // end of function
+
+function getUploadFieldNameFromReq (req) {
+  var info = req.path.split('/');
+  return info[info.length - 2 ];
+}
+

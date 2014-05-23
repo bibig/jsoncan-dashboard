@@ -35,7 +35,6 @@ function render (tableName, config) {
     action: config.action
   };
   
-  
   if (schemas.hasUploadField()) {
     formProperties.enctype = "multipart/form-data";
   }

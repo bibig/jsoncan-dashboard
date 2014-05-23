@@ -60,7 +60,7 @@ tables.articles = {
       table         : 'articleImages',
       title         : 'included images',
       style         : 'media',
-      viewLinkField : 'image|thumb|link',
+      viewLinkField : 'image|thumb_100x100|link',
       order         : ['created', true]
     }
   }
@@ -75,7 +75,7 @@ tables.articleImages = {
     formLayout: [{ title : 5, seq: 2, _article: 5}, 'image', 'memo']
   }, 
   list: {
-    showFields: ['seq', 'title', 'image|thumb|link', '_article.title|link', 'created'],
+    showFields: ['seq', 'title', 'image|thumb_100x100|link', '_article.title|link', 'created'],
     dropdown: {
       name  : 'articles.title',
       title : 'ariticle',
@@ -88,8 +88,11 @@ tables.articleImages = {
     },
     pageSize: 10
   },
+  edit: {
+    formLayout: [{ title : 5, seq: 2, _article: 5}, 'memo']
+  },
   view: {
-    showFields : ['seq', 'title', 'image|image', 'memo', '_article.title|link', 'created', 'modified'],
+    showFields : ['seq', 'title', 'image|image', 'image|thumbs', 'memo', '_article.title|link', 'created', 'modified'],
     isFormat   : true
   }
 };
@@ -122,5 +125,4 @@ function getApp (mount) {
   dashboards.addIndexPage();
   
   return dashboards.app;
-
 }

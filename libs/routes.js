@@ -52,6 +52,10 @@ Routes.prototype.editRoute = function (_id) {
   return path.join(this.rootRoute(), 'edit/' + _id);
 };
 
+Routes.prototype.uploadRoute = function (field, _id) {
+  return path.join(this.rootRoute(), 'upload/' + field + '/' + _id);
+};
+
 Routes.prototype.deleteRoute = function (_id) {
   return path.join(this.rootRoute(), 'delete/' + _id);
 };

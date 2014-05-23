@@ -26,7 +26,7 @@ function render (record, config) {
     
     if (field) {
       rows.push(tr().html(
-        th({ width: '12%', class: 'th-' + field.name }).html(field.text || field.name),
+        th({ width: '12%', class: 'th-' + field.name }).html(present.getFieldText(name)),
         td('td-' + field.name).html(present.show(name))
       ));
     }
@@ -48,6 +48,11 @@ function render (record, config) {
       td().html(hasManyPartHtml)
     ));
   }
+
+  // create upload links
+  config.schemas.forEachFileField(function (name, field) {
+    links.push(present.uploadLink(name, field.text, true));
+  });
   
   editLink   = present.editLink(true);
   deleteLink = present.deleteLink(true);

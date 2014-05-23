@@ -7,6 +7,7 @@ var Config = {
   path       : __dirname,
   staticRoot : '/dashboards-assets',  // the route app serve the static files
   csrf       : true,
+  stylus     : true,
 
   multipart: {
     maxFilesSize : 20 * 1024 * 1024,
@@ -40,7 +41,20 @@ var Config = {
     'success-add'    : '成功新增一条记录',
     'success-edit'   : '成功修改记录',
     'no-data-found'  : '数据不存在'
-  }  
+  },
+  texts: {
+    // for form
+    'edit'        : '编辑',
+    'delete'      : '删除',
+    'add'         : '新增',
+    'view'        : '查看',
+    'upload'      : '上传',
+    'thumb'       : '缩略图',
+    // for views
+    'browser'     : '浏览',
+    'list'        : '清单',
+    'upload_file' : '上传文件'
+  }
 };
 
 // all local url should added viewMount and staticRoot
