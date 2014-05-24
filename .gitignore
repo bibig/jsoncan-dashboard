@@ -7,4 +7,5 @@ test/fixtures/db/*
 test/fixtures/tmp/*
 examples/data
 examples/public
+examples/images
 tmp/*
