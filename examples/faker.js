@@ -1,12 +1,5 @@
-
 var path   = require('path');
 var Filler = require('filler');
-var async  = require('async');
-
-function dropDB (fn) {
-  console.log('ready clear db');
-  clearFiles(path.join(__dirname, 'data'), fn);
-}
 
 function clearFiles (path, fn) {
   var exec = require('child_process').exec;
@@ -25,13 +18,14 @@ function clearImages (fn) {
 function rock () {
   var can = require('./can');
   var filler = new Filler(can, {
-    image_resources: path.join(__dirname, './images'),
-    lang: 'en',
-    tables: {
-      site: 1,
-      articleCategories: 10,
-      articles: 100,
-      articleImages: 230
+    reset  : true,
+    images : path.join(__dirname, './images'),
+    lang   : 'cn',
+    tables : {
+      site              : 1,
+      articleCategories : 10,
+      articles          : 100,
+      articleImages     : 230
     }
   });
 
@@ -41,10 +35,7 @@ function rock () {
   });
 }
 
-async.series([
-  dropDB,
-  clearImages,
-], function (e) {
+clearImages(function (e) {
   if (e) {console.error(e);} else {
     rock();
   }
