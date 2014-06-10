@@ -283,7 +283,15 @@ Schemas.prototype.deleteFiles = function (record, changedFields, callback) {
 
   }, changedFields);
 
-  async.each(files, fs.unlink, callback);
+  async.each(files, function (file, callback) {
+    fs.exists(file, function (exists) {
+      if (exists) {
+        fs.unlink(file, callback);
+      } else {
+        callback();
+      }
+    });
+  }, callback);
 };
 
 Schemas.prototype.convert = function (data, showFields) {

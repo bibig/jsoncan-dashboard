@@ -211,7 +211,7 @@ Controller.prototype.enableUploadAction = function (name) {
   var middlewares = [Fala({
       fields: this.schemas.getFileFields([name])
     })];
-
+  
   middlewares.push(this.uploadSaveAction());
   middlewares.push(this.saveAction());
   this.dashboards.app.all('/' + this.tableName + '/upload/' + name + '/:id', middlewares, this.uploadAction());
@@ -646,7 +646,6 @@ Controller.prototype.saveAction = function () {
       if (Object.keys(req.errors).length === 0 && model.validate()) {
         
         model.save(function (e, record) {
-
           if (e) { next(e); } else {
           
             if (isNew) {
@@ -667,7 +666,7 @@ Controller.prototype.saveAction = function () {
 
       } else {
         yi.merge(req.errors, model.errors);
-        
+        console.log(req.errors);
         if (yi.isNotEmpty(req.files)) {
           self.schemas.deleteFiles(data, null, next);
         } else {
